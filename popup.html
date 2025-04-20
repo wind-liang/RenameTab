@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>RenameTab</title>
+  <style>
+    body {
+      width: 360px;
+      padding: 15px;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    h1 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+    .rule-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .input-group label {
+      font-size: 14px;
+      font-weight: bold;
+    }
+    input, select {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 8px 12px;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #3367d6;
+    }
+    .rules-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 15px;
+    }
+    .rule-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .rule-item .detail {
+      flex-grow: 1;
+    }
+    .rule-item .actions {
+      display: flex;
+      gap: 5px;
+    }
+    .delete-btn {
+      background-color: #ea4335;
+    }
+    .delete-btn:hover {
+      background-color: #d33426;
+    }
+    .quick-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 5px;
+      margin-bottom: 5px;
+    }
+    .quick-option-btn {
+      font-size: 12px;
+      padding: 4px 8px;
+      background-color: #f1f3f4;
+      color: #202124;
+      border: 1px solid #dadce0;
+      flex: 1 0 45%;
+      text-align: center;
+    }
+    .quick-option-btn:hover {
+      background-color: #e8eaed;
+    }
+    .current-url-info {
+      font-size: 12px;
+      background-color: #f8f9fa;
+      padding: 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      border: 1px solid #dadce0;
+    }
+    .current-url-info p {
+      margin: 0 0 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>标签页重命名规则设置</h1>
+    
+    <div id="current-url-info" class="current-url-info">
+      <p><strong>当前页面:</strong> <span id="current-page-title">加载中...</span></p>
+      <p><strong>URL:</strong> <span id="current-page-url">加载中...</span></p>
+    </div>
+    
+    <div class="quick-options">
+      <button id="use-domain-only" class="quick-option-btn">使用域名</button>
+      <button id="use-domain-path" class="quick-option-btn">域名+路径</button>
+      <button id="use-full-url" class="quick-option-btn">域名+路径+参数</button>
+      <button id="use-regex" class="quick-option-btn">正则表达式</button>
+    </div>
+    
+    <div class="rule-form">
+      <div class="input-group">
+        <label for="pattern-type">匹配类型</label>
+        <select id="pattern-type">
+          <option value="domain">域名</option>
+          <option value="url">URL包含</option>
+          <option value="regex">正则表达式</option>
+        </select>
+      </div>
+      
+      <div class="input-group">
+        <label for="pattern-value">匹配值</label>
+        <input type="text" id="pattern-value" placeholder="根据匹配类型自动填写">
+      </div>
+      
+      <div class="input-group">
+        <label for="title-format">标题格式</label>
+        <input type="text" id="title-format" placeholder="例如: [DEV] {title}">
+        <small>使用 {title} 代表原始标题, {domain} 代表域名, {path} 代表路径, {query} 代表查询参数</small>
+      </div>
+      
+      <button id="add-rule">添加规则</button>
+    </div>
+    
+    <h3>已保存的规则</h3>
+    <div id="rules-list" class="rules-list">
+      <!-- 规则列表将通过JS动态生成 -->
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html> 
