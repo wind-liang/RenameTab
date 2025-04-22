@@ -1,119 +1,119 @@
-# Tab Renamer Testing Guide
+# 标签重命名测试指南
 
-This document provides step-by-step instructions for testing the Tab Renamer extension to ensure all requirements are met.
+本文档提供了测试标签重命名扩展的步骤说明，以确保满足所有需求。
 
-## Test Preparation
+## 测试准备
 
-1. Load the extension in Chrome/Edge by going to `chrome://extensions/`, enabling Developer mode, and clicking "Load unpacked" to select the extension directory.
+1. 通过转到 `chrome://extensions/`，启用开发者模式，并点击"加载已解压的扩展程序"选择扩展目录，在Chrome/Edge中加载扩展。
 
-## Test Cases
+## 测试案例
 
-### Basic Functionality
+### 基本功能
 
-1. **Domain Rule Test**
-   - Navigate to `https://www.example.com`
-   - Open the extension
-   - Select "By Domain" option
-   - Verify pattern is auto-filled with `www.example.com`
-   - Enter "Example Website" as the title
-   - Click "Save Rule"
-   - Verify the tab title changes to "Example Website"
-   - Refresh the page and verify the title remains "Example Website"
+1. **域名规则测试**
+   - 导航到 `https://www.example.com`
+   - 打开扩展
+   - 选择"按域名"选项
+   - 验证模式自动填充为 `www.example.com`
+   - 输入"示例网站"作为标题
+   - 点击"保存规则"
+   - 验证标签标题更改为"示例网站"
+   - 刷新页面并验证标题仍为"示例网站"
 
-2. **Domain + Path Rule Test**
-   - Navigate to `https://www.example.com/about`
-   - Open the extension
-   - Select "By Domain + Path" option
-   - Verify pattern is auto-filled with `www.example.com/about`
-   - Enter "Example About Page" as the title
-   - Click "Save Rule"
-   - Verify the tab title changes to "Example About Page"
-   - Navigate to `https://www.example.com` and verify title is "Example Website" (from previous rule)
-   - Navigate back to `https://www.example.com/about` and verify title is "Example About Page"
+2. **域名+路径规则测试**
+   - 导航到 `https://www.example.com/about`
+   - 打开扩展
+   - 选择"按域名+路径"选项
+   - 验证模式自动填充为 `www.example.com/about`
+   - 输入"示例关于页面"作为标题
+   - 点击"保存规则"
+   - 验证标签标题更改为"示例关于页面"
+   - 导航到 `https://www.example.com` 并验证标题为"示例网站"（来自之前的规则）
+   - 导航回 `https://www.example.com/about` 并验证标题为"示例关于页面"
 
-3. **Domain + Path + Parameters Rule Test**
-   - Navigate to `https://www.example.com/search?q=test&page=1`
-   - Open the extension
-   - Select "By Domain + Path + Parameters" option
-   - Verify pattern is auto-filled with `www.example.com/search`
-   - Verify parameters section shows:
+3. **域名+路径+参数规则测试**
+   - 导航到 `https://www.example.com/search?q=test&page=1`
+   - 打开扩展
+   - 选择"按域名+路径+参数"选项
+   - 验证模式自动填充为 `www.example.com/search`
+   - 验证参数部分显示：
      - q: test
      - page: 1
-   - Enter "Test Search Results" as the title
-   - Click "Save Rule"
-   - Verify the tab title changes to "Test Search Results"
-   - Navigate to `https://www.example.com/search?q=other&page=1` and verify title does NOT change
-   - Navigate back to `https://www.example.com/search?q=test&page=1` and verify title is "Test Search Results"
+   - 输入"测试搜索结果"作为标题
+   - 点击"保存规则"
+   - 验证标签标题更改为"测试搜索结果"
+   - 导航到 `https://www.example.com/search?q=other&page=1` 并验证标题不会更改
+   - 导航回 `https://www.example.com/search?q=test&page=1` 并验证标题为"测试搜索结果"
 
-### Advanced Functionality
+### 高级功能
 
-4. **Regex Parameter Test**
-   - Navigate to `https://www.example.com/product?id=12345`
-   - Open the extension
-   - Select "By Domain + Path + Parameters" option
-   - In the parameter section for "id", check the "Regex" checkbox
-   - Change the parameter value to `\d+` (regex for any number)
-   - Enter "Product Page" as the title
-   - Click "Save Rule"
-   - Verify the tab title changes to "Product Page"
-   - Navigate to `https://www.example.com/product?id=67890` and verify title changes to "Product Page"
-   - Navigate to `https://www.example.com/product?id=abc` and verify title does NOT change
-   - Refresh the page with `id=67890` and verify the title is still "Product Page"
+4. **正则参数测试**
+   - 导航到 `https://www.example.com/product?id=12345`
+   - 打开扩展
+   - 选择"按域名+路径+参数"选项
+   - 在"id"参数部分，勾选"正则"选项
+   - 将参数值更改为 `\d+`（匹配任何数字的正则表达式）
+   - 输入"产品页面"作为标题
+   - 点击"保存规则"
+   - 验证标签标题更改为"产品页面"
+   - 导航到 `https://www.example.com/product?id=67890` 并验证标题更改为"产品页面"
+   - 导航到 `https://www.example.com/product?id=abc` 并验证标题不会更改
+   - 刷新带有 `id=67890` 的页面并验证标题仍为"产品页面"
 
-5. **Hash Parameter Test**
-   - Navigate to `https://www.example.com/app#section=dashboard&user=john`
-   - Open the extension
-   - Select "By Domain + Path + Parameters" option
-   - Verify hash parameters are shown with "#" prefix
-   - Enter "John's Dashboard" as the title
-   - Click "Save Rule"
-   - Verify the tab title changes to "John's Dashboard"
-   - Navigate to `https://www.example.com/app#section=settings&user=john` and verify title does NOT change
-   - Navigate back to `https://www.example.com/app#section=dashboard&user=john` and verify title is "John's Dashboard"
+5. **哈希参数测试**
+   - 导航到 `https://www.example.com/app#section=dashboard&user=john`
+   - 打开扩展
+   - 选择"按域名+路径+参数"选项
+   - 验证哈希参数显示带有"#"前缀
+   - 输入"约翰的仪表板"作为标题
+   - 点击"保存规则"
+   - 验证标签标题更改为"约翰的仪表板"
+   - 导航到 `https://www.example.com/app#section=settings&user=john` 并验证标题不会更改
+   - 导航回 `https://www.example.com/app#section=dashboard&user=john` 并验证标题为"约翰的仪表板"
 
-### Rule Management
+### 规则管理
 
-6. **Rule Display Test**
-   - After creating the above rules, open the extension on any page
-   - Verify all created rules are displayed in the rules list
-   - Navigate to a page with a matching rule
-   - Open the extension
-   - Verify the matching rule is highlighted
+6. **规则显示测试**
+   - 创建上述规则后，在任何页面上打开扩展
+   - 验证所有创建的规则都显示在规则列表中
+   - 导航到有匹配规则的页面
+   - 打开扩展
+   - 验证匹配的规则被高亮显示
 
-7. **Rule Deletion Test**
-   - Navigate to a page with an applied rule
-   - Open the extension
-   - Find the matching rule in the list
-   - Click the delete button (×)
-   - Verify the rule disappears from the list
-   - Verify the page title reverts to its original title
+7. **规则删除测试**
+   - 导航到已应用规则的页面
+   - 打开扩展
+   - 在列表中找到匹配的规则
+   - 点击删除按钮（×）
+   - 验证规则从列表中消失
+   - 验证页面标题恢复为原始标题
 
-## Bug Testing
+## 错误测试
 
-8. **Title Persistence in Single Page Applications**
-   - Find a single page application (like Gmail or a React/Vue demo)
-   - Create a rule for a specific route/state
-   - Navigate around the SPA and verify the title remains consistent when on matching routes
+8. **单页应用中的标题持久性**
+   - 找到单页应用程序（如Gmail或React/Vue演示）
+   - 为特定路由/状态创建规则
+   - 在SPA中导航并验证标题在匹配路由上保持一致
 
-9. **Edge Cases**
-   - Test with very long URLs
-   - Test with URLs containing special characters
-   - Test with empty parameter values
-   - Test with websites that rapidly change their titles (YouTube, etc.)
+9. **边缘情况**
+   - 测试非常长的URL
+   - 测试包含特殊字符的URL
+   - 测试空参数值
+   - 测试快速更改标题的网站（如YouTube等）
 
-## Localization Test
+## 本地化测试
 
-10. **Non-ASCII Titles**
-    - Create rules with non-ASCII titles (e.g., Chinese, Arabic, emoji)
-    - Verify the titles display correctly
+10. **非ASCII标题**
+    - 创建带有非ASCII标题的规则（如中文、阿拉伯语、表情符号）
+    - 验证标题正确显示
 
-## Final Verification
+## 最终验证
 
-Ensure all requirements from the original specification are met:
-- Three types of rule matching (domain, path, parameters)
-- Auto-filling of URL based on rule type
-- Parameter parsing including hash parameters
-- Regex support for parameter values
-- Immediate title change on match
-- Title persistence across refreshes
-- Display of matching rules for easy deletion 
+确保满足原始规范中的所有要求：
+- 三种类型的规则匹配（域名、路径、参数）
+- 基于规则类型自动填充URL
+- 参数解析包括哈希参数
+- 参数值的正则表达式支持
+- 匹配时立即更改标题
+- 刷新后标题持久化
+- 显示匹配规则以便于删除 

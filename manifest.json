@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Tab Renamer",
-  "version": "1.0",
-  "description": "Rename browser tabs based on URL patterns",
+  "name": "标签重命名",
+  "version": "1.3.0",
+  "description": "根据URL规则重命名浏览器标签",
   "permissions": ["tabs", "storage"],
   "action": {
     "default_popup": "popup.html",

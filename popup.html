@@ -2,52 +2,47 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Tab Renamer</title>
+  <title>标签重命名</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="container">
-    <h1>Tab Renamer</h1>
-    
-    <!-- Current URL display -->
-    <div class="url-container">
-      <p>Current URL: <span id="current-url"></span></p>
-    </div>
+    <h1>标签重命名</h1>
     
     <!-- Rule type selection -->
     <div class="selection-container">
-      <h2>Select Rule Type</h2>
+      <h2>选择规则类型</h2>
       <div class="options">
         <label>
           <input type="radio" name="rule-type" value="domain" checked>
-          <span>By Domain</span>
+          <span>按域名</span>
         </label>
         <label>
           <input type="radio" name="rule-type" value="path">
-          <span>By Domain + Path</span>
+          <span>按域名+路径</span>
         </label>
         <label>
           <input type="radio" name="rule-type" value="params">
-          <span>By Domain + Path + Parameters</span>
+          <span>按域名+路径+参数</span>
         </label>
       </div>
     </div>
     
     <!-- URL pattern display and customization -->
     <div class="pattern-container">
-      <h2>URL Pattern</h2>
+      <h2>URL 模式</h2>
       <input type="text" id="pattern-input" class="full-width" readonly>
     </div>
     
     <!-- Title input -->
     <div class="title-container">
-      <h2>Custom Title</h2>
-      <input type="text" id="title-input" class="full-width" placeholder="Enter your custom title">
+      <h2>自定义标题</h2>
+      <input type="text" id="title-input" class="full-width" placeholder="请输入自定义标题">
     </div>
     
     <!-- Parameters section (visible only for param mode) -->
     <div id="params-section" class="params-container" style="display: none;">
-      <h2>URL Parameters</h2>
+      <h2>URL 参数</h2>
       <div id="params-list">
         <!-- Parameters will be dynamically added here -->
       </div>
@@ -55,13 +50,13 @@
     
     <!-- Buttons -->
     <div class="actions-container">
-      <button id="save-btn" class="btn primary">Save Rule</button>
-      <button id="cancel-btn" class="btn secondary">Cancel</button>
+      <button id="save-btn" class="btn primary">保存规则</button>
+      <button id="cancel-btn" class="btn secondary">取消</button>
     </div>
     
     <!-- Existing rules section -->
     <div class="rules-container">
-      <h2>Existing Rules</h2>
+      <h2>已有规则</h2>
       <div id="rules-list">
         <!-- Rules will be dynamically added here -->
       </div>

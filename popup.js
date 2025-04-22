@@ -6,7 +6,6 @@
  */
 
 // DOM Elements
-const currentUrlElement = document.getElementById('current-url');
 const patternInput = document.getElementById('pattern-input');
 const titleInput = document.getElementById('title-input');
 const ruleTypeRadios = document.querySelectorAll('input[name="rule-type"]');
@@ -21,6 +20,7 @@ let currentTab = null;
 let currentUrl = null;
 let urlObject = null;
 let urlParams = new Map();
+let editingRuleIndex = -1; // 标记当前正在编辑的规则索引
 
 /**
  * Initialize the popup
@@ -33,9 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Parse the URL
   urlObject = new URL(currentUrl);
-  
-  // Display current URL
-  currentUrlElement.textContent = truncateUrl(currentUrl);
   
   // Set up event listeners
   setupEventListeners();
@@ -66,7 +63,27 @@ function setupEventListeners() {
   saveButton.addEventListener('click', saveRule);
   
   // Cancel button
-  cancelButton.addEventListener('click', () => window.close());
+  cancelButton.addEventListener('click', () => {
+    if (editingRuleIndex !== -1) {
+      // 如果在编辑模式，取消时重置表单
+      resetForm();
+    } else {
+      window.close();
+    }
+  });
+}
+
+/**
+ * Reset the form and exit edit mode
+ */
+function resetForm() {
+  editingRuleIndex = -1;
+  titleInput.value = '';
+  saveButton.textContent = '保存规则';
+  cancelButton.textContent = '取消';
+  
+  // 重置URL和参数
+  handleRuleTypeChange();
 }
 
 /**
@@ -161,7 +178,7 @@ function addParameterToUI(key, value, isHash = false) {
   });
   
   regexLabel.appendChild(regexCheckbox);
-  regexLabel.appendChild(document.createTextNode('Regex'));
+  regexLabel.appendChild(document.createTextNode('正则'));
   
   valueContainer.appendChild(valueInput);
   valueContainer.appendChild(regexLabel);
@@ -187,7 +204,7 @@ function updateParamValue(key, value, isRegex) {
 }
 
 /**
- * Save a new rule
+ * Save a new rule or update an existing one
  */
 async function saveRule() {
   // Get the selected rule type
@@ -198,7 +215,7 @@ async function saveRule() {
   
   // Validate inputs
   if (!customTitle) {
-    alert('Please enter a custom title');
+    alert('请输入自定义标题');
     return;
   }
   
@@ -221,8 +238,18 @@ async function saveRule() {
   // Get existing rules
   const { rules = [] } = await chrome.storage.local.get('rules');
   
-  // Add new rule
-  rules.push(rule);
+  if (editingRuleIndex !== -1) {
+    // 更新现有规则
+    rules[editingRuleIndex] = rule;
+    
+    // 保存规则后重置编辑状态
+    editingRuleIndex = -1;
+    saveButton.textContent = '保存规则';
+    cancelButton.textContent = '取消';
+  } else {
+    // 添加新规则
+    rules.push(rule);
+  }
   
   // Save to storage
   await chrome.storage.local.set({ rules });
@@ -250,7 +277,7 @@ async function loadRules() {
   // Display rules
   if (rules.length === 0) {
     const noRules = document.createElement('div');
-    noRules.textContent = 'No rules created yet.';
+    noRules.textContent = '暂无规则';
     noRules.style.padding = '10px';
     noRules.style.color = '#666';
     rulesList.appendChild(noRules);
@@ -278,18 +305,31 @@ function addRuleToUI(rule, index) {
   
   const ruleTitle = document.createElement('div');
   ruleTitle.className = 'rule-title';
-  ruleTitle.textContent = `Title: ${rule.title}`;
+  ruleTitle.textContent = `标题: ${rule.title}`;
+  
+  const ruleActions = document.createElement('div');
+  ruleActions.className = 'rule-actions';
+  
+  const editButton = document.createElement('button');
+  editButton.className = 'edit-btn';
+  editButton.textContent = '✎';
+  editButton.title = '编辑规则';
+  editButton.addEventListener('click', () => editRule(index));
   
   const deleteButton = document.createElement('button');
   deleteButton.className = 'delete-btn';
   deleteButton.textContent = '×';
-  deleteButton.title = 'Delete rule';
+  deleteButton.title = '删除规则';
   deleteButton.addEventListener('click', () => deleteRule(index));
   
   ruleInfo.appendChild(rulePattern);
   ruleInfo.appendChild(ruleTitle);
   ruleItem.appendChild(ruleInfo);
-  ruleItem.appendChild(deleteButton);
+  
+  ruleActions.appendChild(editButton);
+  ruleActions.appendChild(deleteButton);
+  ruleItem.appendChild(ruleActions);
+  
   rulesList.appendChild(ruleItem);
 }
 
@@ -428,11 +468,47 @@ function stringToRegex(str) {
 }
 
 /**
- * Truncate URL for display purposes
+ * Edit a rule
  */
-function truncateUrl(url) {
-  if (url.length > 50) {
-    return url.substring(0, 47) + '...';
+async function editRule(index) {
+  // 获取规则
+  const { rules = [] } = await chrome.storage.local.get('rules');
+  const rule = rules[index];
+  
+  if (!rule) return;
+  
+  // 设置编辑模式
+  editingRuleIndex = index;
+  
+  // 根据规则类型选择相应的单选按钮
+  document.querySelector(`input[name="rule-type"][value="${rule.type}"]`).checked = true;
+  
+  // 设置URL模式和标题
+  patternInput.value = rule.pattern;
+  titleInput.value = rule.title;
+  
+  // 如果是参数规则，加载参数
+  if (rule.type === 'params') {
+    // 清空当前参数列表
+    paramsList.innerHTML = '';
+    urlParams.clear();
+    
+    // 添加规则中的参数
+    if (rule.params) {
+      Object.entries(rule.params).forEach(([key, value]) => {
+        const isHash = key.startsWith('hash_');
+        urlParams.set(key, value);
+        addParameterToUI(key, value, isHash);
+      });
+    }
+    
+    // 显示参数部分
+    paramsSection.style.display = 'block';
+  } else {
+    paramsSection.style.display = 'none';
   }
-  return url;
+  
+  // 更改按钮文本
+  saveButton.textContent = '更新规则';
+  cancelButton.textContent = '取消编辑';
 } 

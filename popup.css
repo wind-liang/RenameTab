@@ -8,7 +8,7 @@
 
 body {
   width: 400px;
-  min-height: 500px;
+  min-height: 480px;
   background-color: #f5f5f5;
   padding: 15px;
 }
@@ -31,16 +31,6 @@ h2 {
   font-size: 16px;
   color: #444;
   margin: 10px 0;
-}
-
-/* URL display */
-.url-container {
-  background-color: #f1f1f1;
-  padding: 10px;
-  border-radius: 5px;
-  margin-bottom: 15px;
-  word-break: break-all;
-  font-size: 12px;
 }
 
 /* Selection options */
@@ -183,6 +173,19 @@ h2 {
 .rule-title {
   color: #666;
   font-style: italic;
+}
+
+.rule-actions {
+  display: flex;
+  gap: 5px;
+}
+
+.edit-btn {
+  background: none;
+  border: none;
+  color: #4285f4;
+  cursor: pointer;
+  font-size: 16px;
 }
 
 .delete-btn {

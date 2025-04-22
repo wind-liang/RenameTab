@@ -1,75 +1,75 @@
-# Tab Renamer Browser Extension
+# 标签重命名浏览器扩展
 
-This browser extension allows you to rename browser tabs based on URLs, making it easier to identify and organize tabs.
+这个浏览器扩展允许您根据URL规则重命名浏览器标签，让您更容易识别和组织标签。
 
-## Features
+## 功能
 
-- Rename tabs based on domain, path, or URL parameters
-- Supports regex pattern matching for URL parameters
-- Each parameter has a regex checkbox for easy pattern matching
-- Rules persist across page refreshes
-- Easy management of saved rules
-- Automatic title update for matching URLs
+- 基于域名、路径或URL参数重命名标签
+- 支持URL参数的正则表达式匹配
+- 每个参数都有正则表达式切换选项
+- 规则在页面刷新后依然有效
+- 简单管理已保存的规则
+- 匹配URL时自动更新标签标题
 
-## Rule Types
+## 规则类型
 
-The extension supports three types of rules:
+扩展支持三种类型的规则：
 
-1. **By Domain** - Matches any URL on the specified domain
-2. **By Domain + Path** - Matches URLs with the specified domain and path
-3. **By Domain + Path + Parameters** - Matches URLs with specific domain, path, and parameters
+1. **按域名** - 匹配指定域名上的任何URL
+2. **按域名+路径** - 匹配具有指定域名和路径的URL
+3. **按域名+路径+参数** - 匹配具有特定域名、路径和参数的URL
 
-## Parameter Matching
+## 参数匹配
 
-For the "Domain + Path + Parameters" rule type, you can:
+对于"域名+路径+参数"规则类型，您可以：
 
-- Match exact parameter values
-- Use regex patterns for parameter values by checking the "Regex" checkbox
-- Match hash parameters (those after the `#` in the URL)
+- 匹配精确的参数值
+- 通过勾选"正则"选项来使用正则表达式匹配参数值
+- 匹配哈希参数（URL中#后面的参数）
 
-### Regex Examples
+### 正则表达式示例
 
-- `/\\d+/` - Match any numeric value
-- `/user\\d+/i` - Match "user" followed by numbers (case insensitive)
-- `/^(admin|editor)$/` - Match exactly "admin" or "editor"
+- `\d+` - 匹配任何数字值
+- `user\d+` - 匹配"user"后跟数字（默认不区分大小写）
+- `^(admin|editor)$` - 精确匹配"admin"或"editor"
 
-## Installation
+## 安装
 
 ### Chrome/Edge
 
-1. Download or clone this repository
-2. Open Chrome/Edge and navigate to `chrome://extensions/` or `edge://extensions/`
-3. Enable "Developer mode"
-4. Click "Load unpacked" and select the extension directory
+1. 下载或克隆此仓库
+2. 打开Chrome/Edge并导航到`chrome://extensions/`或`edge://extensions/`
+3. 启用"开发者模式"
+4. 点击"加载已解压的扩展程序"并选择扩展目录
 
 ### Firefox
 
-1. Download or clone this repository
-2. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
-3. Click "Load Temporary Add-on" and select the `manifest.json` file
+1. 下载或克隆此仓库
+2. 打开Firefox并导航到`about:debugging#/runtime/this-firefox`
+3. 点击"临时载入附加组件"并选择`manifest.json`文件
 
-## Usage
+## 使用方法
 
-1. Navigate to a website you want to create a rule for
-2. Click on the extension icon
-3. Select a rule type (Domain, Path, or Parameters)
-4. Customize the URL pattern if needed
-5. Enter your custom title
-6. For parameter rules, you can modify parameter values or use regex
-7. Click "Save Rule"
+1. 导航到您想要创建规则的网站
+2. 点击扩展图标
+3. 选择规则类型（域名、路径或参数）
+4. 如有需要，自定义URL模式
+5. 输入您的自定义标题
+6. 对于参数规则，您可以修改参数值或使用正则表达式
+7. 点击"保存规则"
 
-## Editing Existing Rules
+## 编辑现有规则
 
-All your saved rules appear at the bottom of the extension popup. You can:
+所有已保存的规则都会显示在扩展弹出窗口底部。您可以：
 
-- Click the "×" button to delete a rule
-- Create a new rule to replace an existing one (rules with matching patterns will be highlighted)
+- 点击"×"按钮删除规则
+- 创建新规则替换现有规则（匹配模式的规则会被高亮显示）
 
-## Notes
+## 注意
 
-- The extension uses local storage to save rules, so they are persistent across browser sessions
-- Rules with parameter regex will be evaluated at runtime to determine matches
+- 扩展使用本地存储保存规则，所以它们在浏览器会话之间是持久的
+- 带参数正则的规则将在运行时评估以确定匹配
 
-## License
+## 许可证
 
 MIT 

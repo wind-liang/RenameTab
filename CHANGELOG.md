@@ -1,25 +1,48 @@
-# Changelog
+# 更新日志
 
-## 1.1.0 - Regex Checkbox Feature
+## 1.3.0 - 规则编辑功能
 
-### Added
-- Added checkboxes next to each parameter value to toggle regex mode
-- Added more robust error handling for regex pattern creation
-- Added examples of regex patterns in the README
+### 添加
+- 为已有规则添加编辑功能
+- 编辑按钮显示在每条规则旁边
+- 取消编辑功能，可以恢复原始状态
 
-### Fixed
-- Fixed regex pattern persistence after page refresh
-- Improved regex pattern validation for enhanced stability
-- Fixed error handling for malformed regex patterns
+### 修改
+- 优化了规则管理界面的布局
+- 改进了按钮交互逻辑
+- 更新了编辑流程，使用户体验更流畅
 
-### Changed
-- Simplified the UI for regex pattern input
-- Changed the parameter value display to show the pattern without the regex delimiters and flags when in regex mode
-- Updated documentation and testing instructions
+## 1.2.0 - 中文界面
 
-## 1.0.0 - Initial Release
+### 添加
+- 将界面文字改为中文，提升中文用户体验
+- 更新了界面布局，去掉冗余的当前URL显示
 
-- Basic tab renaming functionality
-- Support for three types of rules: domain, path, and parameters
-- Parameter regex support using forward slash notation
-- Rule management and persistence 
+### 修改
+- 扩展名和描述改为中文
+- 将所有提示和按钮文本改为中文
+- 简化了界面布局
+
+## 1.1.0 - 正则选择框功能
+
+### 添加
+- 为每个参数值添加了正则表达式切换选择框
+- 增强了正则表达式创建的错误处理
+- 在README中添加了正则表达式示例
+
+### 修复
+- 修复了页面刷新后正则表达式失效的问题
+- 改进了正则表达式验证，增强稳定性
+- 修复了错误的正则表达式模式处理
+
+### 修改
+- 简化了正则表达式输入的UI
+- 在正则模式下更改了参数值显示，去掉正则定界符和标志
+- 更新了文档和测试说明
+
+## 1.0.0 - 初始版本
+
+- 基本的标签重命名功能
+- 支持三种规则类型：域名、路径和参数
+- 使用斜杠表示法的参数正则支持
+- 规则管理和持久化 
