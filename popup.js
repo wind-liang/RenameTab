@@ -45,9 +45,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Load existing rules
   loadRules();
-  
-  // Check if current URL matches any existing rule
-  checkForMatchingRules();
 });
 
 /**
@@ -316,17 +313,41 @@ async function loadRules() {
     return;
   }
   
+  // 查找匹配当前URL的规则
+  const matchingRulesIndices = [];
+  const nonMatchingRulesIndices = [];
+  
+  // 分类规则为匹配和不匹配
   rules.forEach((rule, index) => {
-    addRuleToUI(rule, index);
+    if (doesUrlMatchRule(currentUrl, rule)) {
+      matchingRulesIndices.push(index);
+    } else {
+      nonMatchingRulesIndices.push(index);
+    }
+  });
+  
+  // 先添加匹配的规则
+  matchingRulesIndices.forEach(index => {
+    addRuleToUI(rules[index], index, true); // 传入true表示匹配当前URL
+  });
+  
+  // 再添加不匹配的规则
+  nonMatchingRulesIndices.forEach(index => {
+    addRuleToUI(rules[index], index, false); // 传入false表示不匹配当前URL
   });
 }
 
 /**
  * Add a rule to the UI
  */
-function addRuleToUI(rule, index) {
+function addRuleToUI(rule, index, isMatching = false) {
   const ruleItem = document.createElement('div');
   ruleItem.className = 'rule-item';
+  
+  // 如果规则匹配当前URL，添加高亮样式
+  if (isMatching) {
+    ruleItem.classList.add('rule-item-matching');
+  }
   
   const ruleInfo = document.createElement('div');
   ruleInfo.className = 'rule-info';
@@ -384,23 +405,6 @@ async function deleteRule(index) {
   // Reset the current tab's title if it was using this rule
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     chrome.tabs.sendMessage(tabs[0].id, { action: 'resetTitle' });
-  });
-}
-
-/**
- * Check if the current URL matches any existing rule
- */
-async function checkForMatchingRules() {
-  const { rules = [] } = await chrome.storage.local.get('rules');
-  
-  // Highlight matching rules in the UI
-  rules.forEach((rule, index) => {
-    if (doesUrlMatchRule(currentUrl, rule)) {
-      const ruleItems = rulesList.querySelectorAll('.rule-item');
-      if (ruleItems[index]) {
-        ruleItems[index].style.backgroundColor = '#e8f0fe';
-      }
-    }
   });
 }
 

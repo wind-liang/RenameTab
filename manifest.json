@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "标签重命名",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "根据URL规则重命名浏览器标签",
   "permissions": ["tabs", "storage"],
   "action": {
