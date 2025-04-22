@@ -2,158 +2,72 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>RenameTab</title>
-  <style>
-    body {
-      width: 360px;
-      padding: 15px;
-      font-family: Arial, sans-serif;
-    }
-    .container {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    h1 {
-      font-size: 18px;
-      margin-bottom: 10px;
-    }
-    .rule-form {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 15px;
-      border: 1px solid #ddd;
-      padding: 10px;
-      border-radius: 5px;
-    }
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .input-group label {
-      font-size: 14px;
-      font-weight: bold;
-    }
-    input, select {
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    button {
-      padding: 8px 12px;
-      background-color: #4285f4;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #3367d6;
-    }
-    .rules-list {
-      max-height: 300px;
-      overflow-y: auto;
-      margin-top: 15px;
-    }
-    .rule-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px;
-      border-bottom: 1px solid #eee;
-    }
-    .rule-item .detail {
-      flex-grow: 1;
-    }
-    .rule-item .actions {
-      display: flex;
-      gap: 5px;
-    }
-    .delete-btn {
-      background-color: #ea4335;
-    }
-    .delete-btn:hover {
-      background-color: #d33426;
-    }
-    .quick-options {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-top: 5px;
-      margin-bottom: 5px;
-    }
-    .quick-option-btn {
-      font-size: 12px;
-      padding: 4px 8px;
-      background-color: #f1f3f4;
-      color: #202124;
-      border: 1px solid #dadce0;
-      flex: 1 0 45%;
-      text-align: center;
-    }
-    .quick-option-btn:hover {
-      background-color: #e8eaed;
-    }
-    .current-url-info {
-      font-size: 12px;
-      background-color: #f8f9fa;
-      padding: 8px;
-      border-radius: 4px;
-      margin-bottom: 10px;
-      border: 1px solid #dadce0;
-    }
-    .current-url-info p {
-      margin: 0 0 5px 0;
-    }
-  </style>
+  <title>Tab Renamer</title>
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="container">
-    <h1>标签页重命名规则设置</h1>
+    <h1>Tab Renamer</h1>
     
-    <div id="current-url-info" class="current-url-info">
-      <p><strong>当前页面:</strong> <span id="current-page-title">加载中...</span></p>
-      <p><strong>URL:</strong> <span id="current-page-url">加载中...</span></p>
+    <!-- Current URL display -->
+    <div class="url-container">
+      <p>Current URL: <span id="current-url"></span></p>
     </div>
     
-    <div class="quick-options">
-      <button id="use-domain-only" class="quick-option-btn">使用域名</button>
-      <button id="use-domain-path" class="quick-option-btn">域名+路径</button>
-      <button id="use-full-url" class="quick-option-btn">域名+路径+参数</button>
-      <button id="use-regex" class="quick-option-btn">正则表达式</button>
+    <!-- Rule type selection -->
+    <div class="selection-container">
+      <h2>Select Rule Type</h2>
+      <div class="options">
+        <label>
+          <input type="radio" name="rule-type" value="domain" checked>
+          <span>By Domain</span>
+        </label>
+        <label>
+          <input type="radio" name="rule-type" value="path">
+          <span>By Domain + Path</span>
+        </label>
+        <label>
+          <input type="radio" name="rule-type" value="params">
+          <span>By Domain + Path + Parameters</span>
+        </label>
+      </div>
     </div>
     
-    <div class="rule-form">
-      <div class="input-group">
-        <label for="pattern-type">匹配类型</label>
-        <select id="pattern-type">
-          <option value="domain">域名</option>
-          <option value="url">URL包含</option>
-          <option value="regex">正则表达式</option>
-        </select>
-      </div>
-      
-      <div class="input-group">
-        <label for="pattern-value">匹配值</label>
-        <input type="text" id="pattern-value" placeholder="根据匹配类型自动填写">
-      </div>
-      
-      <div class="input-group">
-        <label for="title-format">标题格式</label>
-        <input type="text" id="title-format" placeholder="例如: [DEV] {title}">
-        <small>使用 {title} 代表原始标题, {domain} 代表域名, {path} 代表路径, {query} 代表查询参数</small>
-      </div>
-      
-      <button id="add-rule">添加规则</button>
+    <!-- URL pattern display and customization -->
+    <div class="pattern-container">
+      <h2>URL Pattern</h2>
+      <input type="text" id="pattern-input" class="full-width" readonly>
     </div>
     
-    <h3>已保存的规则</h3>
-    <div id="rules-list" class="rules-list">
-      <!-- 规则列表将通过JS动态生成 -->
+    <!-- Title input -->
+    <div class="title-container">
+      <h2>Custom Title</h2>
+      <input type="text" id="title-input" class="full-width" placeholder="Enter your custom title">
+    </div>
+    
+    <!-- Parameters section (visible only for param mode) -->
+    <div id="params-section" class="params-container" style="display: none;">
+      <h2>URL Parameters</h2>
+      <div id="params-list">
+        <!-- Parameters will be dynamically added here -->
+      </div>
+    </div>
+    
+    <!-- Buttons -->
+    <div class="actions-container">
+      <button id="save-btn" class="btn primary">Save Rule</button>
+      <button id="cancel-btn" class="btn secondary">Cancel</button>
+    </div>
+    
+    <!-- Existing rules section -->
+    <div class="rules-container">
+      <h2>Existing Rules</h2>
+      <div id="rules-list">
+        <!-- Rules will be dynamically added here -->
+      </div>
     </div>
   </div>
+  
   <script src="popup.js"></script>
 </body>
 </html> 

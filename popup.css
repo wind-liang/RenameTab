@@ -1,0 +1,194 @@
+/* General styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  width: 400px;
+  min-height: 500px;
+  background-color: #f5f5f5;
+  padding: 15px;
+}
+
+.container {
+  background-color: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  font-size: 20px;
+  color: #333;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+h2 {
+  font-size: 16px;
+  color: #444;
+  margin: 10px 0;
+}
+
+/* URL display */
+.url-container {
+  background-color: #f1f1f1;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  word-break: break-all;
+  font-size: 12px;
+}
+
+/* Selection options */
+.selection-container {
+  margin-bottom: 15px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* Pattern and title inputs */
+.pattern-container, .title-container {
+  margin-bottom: 15px;
+}
+
+.full-width {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 5px;
+}
+
+/* Parameter section */
+.params-container {
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.param-item {
+  display: flex;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.param-key {
+  flex: 0 0 120px;
+  font-weight: bold;
+}
+
+.param-value-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.param-value {
+  flex: 1;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.regex-label {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  white-space: nowrap;
+  color: #666;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.regex-checkbox {
+  margin: 0;
+}
+
+/* Buttons */
+.actions-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.btn {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.primary {
+  background-color: #4285f4;
+  color: white;
+}
+
+.primary:hover {
+  background-color: #3367d6;
+}
+
+.secondary {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.secondary:hover {
+  background-color: #e4e4e4;
+}
+
+/* Rules list */
+.rules-container {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.rule-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+.rule-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.rule-pattern {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rule-title {
+  color: #666;
+  font-style: italic;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: #d93025;
+  cursor: pointer;
+  font-size: 16px;
+} 

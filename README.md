@@ -1,66 +1,75 @@
-# RenameTab - Chrome Tab Title Customization Extension
+# Tab Renamer Browser Extension
 
-这是一个Chrome扩展，用于根据您设置的规则自定义标签页的标题。
+This browser extension allows you to rename browser tabs based on URLs, making it easier to identify and organize tabs.
 
-## 功能特性
+## Features
 
-- 可以根据域名、URL路径或正则表达式匹配页面
-- 自定义标签页标题的格式
-- 支持使用模板变量，如{title}（原始标题）、{domain}（域名）、{path}（路径）等
-- 刷新页面后依然保持自定义标题
-- 规则可以随时添加、删除和管理
+- Rename tabs based on domain, path, or URL parameters
+- Supports regex pattern matching for URL parameters
+- Each parameter has a regex checkbox for easy pattern matching
+- Rules persist across page refreshes
+- Easy management of saved rules
+- Automatic title update for matching URLs
 
-## 安装方法
+## Rule Types
 
-### 从Chrome扩展商店安装（尚未发布）
+The extension supports three types of rules:
 
-1. 访问Chrome Web Store（链接将在发布后提供）
-2. 点击"添加到Chrome"按钮
+1. **By Domain** - Matches any URL on the specified domain
+2. **By Domain + Path** - Matches URLs with the specified domain and path
+3. **By Domain + Path + Parameters** - Matches URLs with specific domain, path, and parameters
 
-### 手动安装（开发者模式）
+## Parameter Matching
 
-1. 下载并解压此项目
-2. 在Chrome浏览器中访问 `chrome://extensions/`
-3. 开启右上角的"开发者模式"
-4. 点击"加载已解压的扩展程序"
-5. 选择解压后的项目文件夹
+For the "Domain + Path + Parameters" rule type, you can:
 
-## 使用说明
+- Match exact parameter values
+- Use regex patterns for parameter values by checking the "Regex" checkbox
+- Match hash parameters (those after the `#` in the URL)
 
-1. 点击Chrome工具栏中的RenameTab图标打开扩展弹窗
-2. 添加新规则：
-   - 选择匹配类型（域名、URL包含或正则表达式）
-   - 输入匹配值
-   - 设置标题格式（使用{title}表示原始标题，{domain}表示域名等）
-   - 点击"添加规则"按钮
-3. 规则立即生效，访问匹配的页面时标题将自动更改
-4. 需要删除规则时，在规则列表中找到相应规则并点击"删除"按钮
+### Regex Examples
 
-## 格式变量
+- `/\\d+/` - Match any numeric value
+- `/user\\d+/i` - Match "user" followed by numbers (case insensitive)
+- `/^(admin|editor)$/` - Match exactly "admin" or "editor"
 
-在标题格式中，您可以使用以下变量：
+## Installation
 
-- `{title}` - 页面的原始标题
-- `{domain}` - 网站的域名
-- `{path}` - URL的路径部分
-- `{query}` - URL的查询参数部分
+### Chrome/Edge
 
-## 示例
+1. Download or clone this repository
+2. Open Chrome/Edge and navigate to `chrome://extensions/` or `edge://extensions/`
+3. Enable "Developer mode"
+4. Click "Load unpacked" and select the extension directory
 
-1. 为开发环境网站添加标识：
-   - 匹配类型：域名
-   - 匹配值：dev.example.com
-   - 标题格式：[DEV] {title}
+### Firefox
 
-2. 为所有Google搜索添加前缀：
-   - 匹配类型：URL包含
-   - 匹配值：google.com/search
-   - 标题格式：🔍 {title}
+1. Download or clone this repository
+2. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`
+3. Click "Load Temporary Add-on" and select the `manifest.json` file
 
-## 问题反馈
+## Usage
 
-如有任何问题或建议，请提交issue或联系开发者。
+1. Navigate to a website you want to create a rule for
+2. Click on the extension icon
+3. Select a rule type (Domain, Path, or Parameters)
+4. Customize the URL pattern if needed
+5. Enter your custom title
+6. For parameter rules, you can modify parameter values or use regex
+7. Click "Save Rule"
 
-## 许可证
+## Editing Existing Rules
+
+All your saved rules appear at the bottom of the extension popup. You can:
+
+- Click the "×" button to delete a rule
+- Create a new rule to replace an existing one (rules with matching patterns will be highlighted)
+
+## Notes
+
+- The extension uses local storage to save rules, so they are persistent across browser sessions
+- Rules with parameter regex will be evaluated at runtime to determine matches
+
+## License
 
 MIT 

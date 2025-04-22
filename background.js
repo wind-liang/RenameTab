@@ -1,158 +1,140 @@
-// 存储标签页的原始标题
-const originalTitles = {};
+/**
+ * Tab Renamer Extension - Background Script
+ * 
+ * This background script handles:
+ * 1. Applying rules when navigating to new pages or refreshing
+ * 2. Communication between the popup and content scripts
+ * 3. Managing tab updates
+ */
 
-// 监听标签页更新事件
+/**
+ * Listen for tab updates
+ * This will catch navigation events and page reloads
+ */
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  // 只在页面加载完成或标题变更时处理
-  if (changeInfo.status === 'complete' || changeInfo.title) {
-    processTab(tabId, tab);
-  }
-});
-
-// 监听来自其他部分的消息
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // 规则更新消息（来自popup）
-  if (message.action === 'rulesUpdated') {
-    // 重新应用规则到所有打开的标签页
-    applyToAllTabs();
-  }
-  
-  // 内容脚本就绪消息（来自content script）
-  if (message.action === 'contentScriptReady') {
-    if (sender.tab) {
-      processTab(sender.tab.id, sender.tab);
-    }
-  }
-  
-  // 标题变更消息（来自content script）
-  if (message.action === 'titleChanged') {
-    if (sender.tab) {
-      // 检查这个标题变化是否由网页本身引起的
-      // 如果是，更新我们存储的原始标题
-      const tabId = sender.tab.id;
-      const currentStored = originalTitles[tabId];
+  // Only proceed when the page is fully loaded
+  if (changeInfo.status === 'complete' && tab.url) {
+    // Skip chrome:// URLs, extension pages, etc.
+    if (!tab.url.startsWith('http')) return;
+    
+    // Get all saved rules
+    chrome.storage.local.get('rules', ({ rules = [] }) => {
+      // Try to find a matching rule
+      const matchingRule = findMatchingRule(tab.url, rules);
       
-      // 只有当我们确定这是一个由页面本身产生的新标题时，才更新原始标题
-      if (!currentStored || 
-          (message.originalTitle && 
-           message.originalTitle !== currentStored)) {
-        originalTitles[tabId] = message.originalTitle;
-        
-        // 重新处理标签以应用我们的规则
-        processTab(tabId, sender.tab);
+      // If a matching rule is found, apply it
+      if (matchingRule) {
+        applyRuleToTab(tabId, matchingRule);
       }
-    }
-  }
-});
-
-// 初始化时应用规则到所有标签页
-chrome.runtime.onInstalled.addListener(() => {
-  applyToAllTabs();
-});
-
-// 应用规则到所有打开的标签页
-function applyToAllTabs() {
-  chrome.tabs.query({}, (tabs) => {
-    tabs.forEach(tab => {
-      processTab(tab.id, tab);
     });
-  });
-}
-
-// 处理单个标签页
-function processTab(tabId, tab) {
-  // 如果标签页没有URL或是扩展页面，则跳过
-  if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
-    return;
   }
-  
-  // 获取所有规则
-  chrome.storage.sync.get('rules', (data) => {
-    const rules = data.rules || [];
-    let matchedRule = findMatchingRule(tab.url, rules);
-    
-    if (matchedRule) {
-      // 存储原始标题（如果还没存储）
-      if (!originalTitles[tabId] && tab.title) {
-        originalTitles[tabId] = tab.title;
-      }
-      
-      // 应用标题格式
-      const originalTitle = originalTitles[tabId] || tab.title;
-      const url = new URL(tab.url);
-      const domain = url.hostname;
-      const path = url.pathname;
-      const query = url.search;
-      
-      const newTitle = matchedRule.format
-        .replace(/{title}/g, originalTitle)
-        .replace(/{domain}/g, domain)
-        .replace(/{path}/g, path)
-        .replace(/{query}/g, query);
-      
-      // 通过content script修改标题
-      chrome.tabs.sendMessage(tabId, { 
-        action: 'changeTitle', 
-        title: newTitle 
-      }, (response) => {
-        // 处理可能的错误（例如content script尚未加载）
-        if (chrome.runtime.lastError) {
-          console.log('Error sending message to content script:', chrome.runtime.lastError);
-        }
-      });
-    }
-  });
-}
+});
 
-// 查找匹配的规则
+/**
+ * Find a rule that matches the given URL
+ */
 function findMatchingRule(url, rules) {
-  const urlObj = new URL(url);
-  const domain = urlObj.hostname;
-  const path = urlObj.pathname;
-  const fullUrl = url.toLowerCase();
-  const domainAndPath = (domain + path).toLowerCase();
-  const domainPathQuery = (domain + path + urlObj.search).toLowerCase();
-  
-  // 按添加顺序检查规则（越新的规则优先级越高）
-  for (let i = rules.length - 1; i >= 0; i--) {
-    const rule = rules[i];
-    const pattern = rule.pattern.toLowerCase();
+  try {
+    const urlObj = new URL(url);
     
-    switch (rule.type) {
-      case 'domain':
-        // 域名匹配
-        if (domain === pattern || domain.endsWith('.' + pattern)) {
-          return rule;
-        }
-        break;
-        
-      case 'url':
-        // URL包含匹配 - 增强匹配逻辑以处理不同的URL部分组合
-        if (fullUrl.includes(pattern) || 
-            domainAndPath === pattern || 
-            domainPathQuery === pattern) {
-          return rule;
-        }
-        break;
-        
-      case 'regex':
-        // 正则表达式匹配
-        try {
-          const regex = new RegExp(rule.pattern);
-          if (regex.test(fullUrl)) {
+    for (const rule of rules) {
+      switch (rule.type) {
+        case 'domain':
+          if (urlObj.hostname === rule.pattern) {
             return rule;
           }
-        } catch (e) {
-          console.error('Invalid regex pattern:', rule.pattern);
-        }
-        break;
+          break;
+          
+        case 'path':
+          if (urlObj.hostname + urlObj.pathname === rule.pattern) {
+            return rule;
+          }
+          break;
+          
+        case 'params':
+          // First, check if hostname and pathname match
+          if (urlObj.hostname + urlObj.pathname !== rule.pattern) {
+            continue;
+          }
+          
+          // Then, have the content script check the parameters
+          // (This is handled separately in the content script)
+          return rule;
+      }
     }
+  } catch (e) {
+    console.error('Error parsing URL:', e);
   }
   
   return null;
 }
 
-// 处理标签页关闭事件，清理存储
-chrome.tabs.onRemoved.addListener((tabId) => {
-  delete originalTitles[tabId];
-}); 
+/**
+ * Apply a rule to a specific tab
+ */
+function applyRuleToTab(tabId, rule) {
+  try {
+    // For domain and path rules, we can directly apply
+    if (rule.type === 'domain' || rule.type === 'path') {
+      chrome.tabs.sendMessage(tabId, {
+        action: 'applyRule',
+        rule: rule
+      });
+    } else if (rule.type === 'params') {
+      // For param rules, we need to check if parameters match first
+      // Send the rule to the content script to check
+      chrome.tabs.sendMessage(tabId, {
+        action: 'checkUrl',
+        rule: rule
+      }, (response) => {
+        // If the URL matches, apply the rule
+        if (response && response.matches) {
+          chrome.tabs.sendMessage(tabId, {
+            action: 'applyRule',
+            rule: rule
+          });
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Error applying rule to tab:', e);
+  }
+}
+
+/**
+ * Check if a string is a regex pattern
+ */
+function isRegexString(str) {
+  if (typeof str !== 'string') return false;
+  return str.startsWith('/') && str.lastIndexOf('/') > 0;
+}
+
+/**
+ * Convert a string to a RegExp object
+ */
+function stringToRegex(str) {
+  if (typeof str !== 'string') return new RegExp('.*');
+  
+  try {
+    const lastSlashIndex = str.lastIndexOf('/');
+    if (lastSlashIndex <= 0) return new RegExp(str);
+    
+    const pattern = str.slice(1, lastSlashIndex);
+    const flags = str.slice(lastSlashIndex + 1);
+    return new RegExp(pattern, flags);
+  } catch (e) {
+    console.error('Error creating regex from string:', e);
+    return new RegExp('.*');
+  }
+}
+
+/**
+ * Initialize the extension
+ */
+function init() {
+  // You could add additional initialization logic here if needed
+  console.log('Tab Renamer extension initialized.');
+}
+
+// Run initialization
+init(); 
