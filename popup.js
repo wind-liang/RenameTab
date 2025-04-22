@@ -165,6 +165,13 @@ function addParameterToUI(key, value, isHash = false) {
     updateParamValue(key, e.target.value, regexCheckbox.checked);
   });
   
+  // 创建值容器并添加输入框
+  valueContainer.appendChild(valueInput);
+  
+  // Create actions container
+  const actionsContainer = document.createElement('div');
+  actionsContainer.className = 'param-actions';
+  
   // Create checkbox for regex
   const regexLabel = document.createElement('label');
   regexLabel.className = 'regex-label';
@@ -177,11 +184,23 @@ function addParameterToUI(key, value, isHash = false) {
     updateParamValue(key, valueInput.value, e.target.checked);
   });
   
+  // Create delete button
+  const deleteButton = document.createElement('button');
+  deleteButton.className = 'param-delete-btn';
+  deleteButton.textContent = '×';
+  deleteButton.title = '删除此参数';
+  deleteButton.addEventListener('click', () => {
+    deleteParameter(key, paramItem);
+  });
+  
   regexLabel.appendChild(regexCheckbox);
   regexLabel.appendChild(document.createTextNode('正则'));
   
-  valueContainer.appendChild(valueInput);
-  valueContainer.appendChild(regexLabel);
+  actionsContainer.appendChild(regexLabel);
+  actionsContainer.appendChild(deleteButton);
+  
+  // 先添加input，再添加操作区域
+  valueContainer.appendChild(actionsContainer);
   
   paramItem.appendChild(keyElement);
   paramItem.appendChild(valueContainer);
@@ -200,6 +219,19 @@ function updateParamValue(key, value, isRegex) {
     urlParams.set(key, val);
   } else {
     urlParams.set(key, value);
+  }
+}
+
+/**
+ * Delete a parameter
+ */
+function deleteParameter(key, paramElement) {
+  // 从URL参数中移除
+  urlParams.delete(key);
+  
+  // 从UI中移除
+  if (paramElement && paramElement.parentNode) {
+    paramElement.parentNode.removeChild(paramElement);
   }
 }
 
@@ -495,11 +527,24 @@ async function editRule(index) {
     
     // 添加规则中的参数
     if (rule.params) {
-      Object.entries(rule.params).forEach(([key, value]) => {
-        const isHash = key.startsWith('hash_');
-        urlParams.set(key, value);
-        addParameterToUI(key, value, isHash);
-      });
+      // 将参数转换为数组并进行排序，使界面显示更加一致
+      const paramsArray = Object.entries(rule.params);
+      
+      // 先添加非哈希参数
+      paramsArray
+        .filter(([key]) => !key.startsWith('hash_'))
+        .forEach(([key, value]) => {
+          urlParams.set(key, value);
+          addParameterToUI(key, value, false);
+        });
+      
+      // 再添加哈希参数
+      paramsArray
+        .filter(([key]) => key.startsWith('hash_'))
+        .forEach(([key, value]) => {
+          urlParams.set(key, value);
+          addParameterToUI(key, value, true);
+        });
     }
     
     // 显示参数部分
