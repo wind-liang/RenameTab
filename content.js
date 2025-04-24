@@ -2,6 +2,9 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'applyRule') {
     applyRule(message.rule);
+  } else if (message.action === 'getTitle') {
+    sendResponse({ title: document.title });
+    return true; // 保持消息通道开放以支持异步响应
   }
 });
 
@@ -88,6 +91,12 @@ function checkAndApplyRules() {
           // 如果页面标题可能会动态变化，添加监听器确保标题保持为我们设置的
           observeTitleChanges(rule.title);
           
+          // 同时更新浏览器标签页的标题
+          chrome.runtime.sendMessage({
+            action: 'updateTabTitle',
+            title: rule.title
+          });
+          
           break;
         }
       }
@@ -103,6 +112,11 @@ function observeTitleChanges(customTitle) {
   const titleObserver = new MutationObserver(function(mutations) {
     if (document.title !== customTitle) {
       document.title = customTitle;
+      // 同时更新浏览器标签页的标题
+      chrome.runtime.sendMessage({
+        action: 'updateTabTitle',
+        title: customTitle
+      });
     }
   });
   
@@ -110,6 +124,11 @@ function observeTitleChanges(customTitle) {
   const titleInterval = setInterval(function() {
     if (document.title !== customTitle) {
       document.title = customTitle;
+      // 同时更新浏览器标签页的标题
+      chrome.runtime.sendMessage({
+        action: 'updateTabTitle',
+        title: customTitle
+      });
     }
   }, 1000);
   

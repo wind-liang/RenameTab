@@ -171,8 +171,28 @@ document.addEventListener('DOMContentLoaded', function() {
     savedRules.push(rule);
     chrome.storage.local.set({rules: savedRules}, function() {
       renderSavedRules();
-      // 立即应用规则
-      applyRuleToCurrentTab(rule);
+      // 立即应用规则到当前标签页
+      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        if (tabs[0]) {
+          // 先发送消息给 content script 更新标题
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: 'applyRule',
+            rule: rule
+          });
+          
+          // 同时更新浏览器标签页的标题
+          chrome.tabs.sendMessage(tabs[0].id, {
+            action: 'getTitle'
+          }, function(response) {
+            if (response && response.title) {
+              chrome.tabs.update(tabs[0].id, {
+                title: response.title
+              });
+            }
+          });
+        }
+      });
+      
       // 清空表单
       titleInput.value = '';
     });
