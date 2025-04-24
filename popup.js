@@ -54,36 +54,45 @@ document.addEventListener('DOMContentLoaded', function() {
         paramsContainer.classList.add('hidden');
       } else if (selectedRuleType === 'domain-path-params') {
         urlPatternInput.value = url.hostname + url.pathname;
-        parseAndDisplayParams(url);
+        
+        // 清空现有参数列表
+        paramsList.innerHTML = '';
+        
+        // 获取当前保留的参数
+        const existingParams = new Set();
+        paramsList.querySelectorAll('.param-group').forEach(group => {
+          const input = group.querySelector('input[type="text"]');
+          existingParams.add(input.dataset.key);
+        });
+        
+        // 只添加尚未存在的参数
+        const searchParams = url.searchParams;
+        for (const [key, value] of searchParams.entries()) {
+          if (!existingParams.has(key)) {
+            addParamRow(key, value, false);
+          }
+        }
+        
+        // 处理hash参数
+        if (url.hash) {
+          const hashContent = url.hash.substring(1);
+          if (hashContent.includes('=')) {
+            const hashParams = new URLSearchParams(hashContent);
+            for (const [key, value] of hashParams.entries()) {
+              if (!existingParams.has(key)) {
+                addParamRow(key, value, true);
+              }
+            }
+          } else if (hashContent && !existingParams.has('hash')) {
+            addParamRow('hash', hashContent, true);
+          }
+        }
+        
         paramsContainer.classList.remove('hidden');
       }
     } catch (e) {
       console.error("Error parsing URL:", e);
       urlPatternInput.value = currentUrl;
-    }
-  }
-
-  // 解析和显示URL参数
-  function parseAndDisplayParams(url) {
-    paramsList.innerHTML = '';
-    
-    // 处理查询参数
-    const searchParams = url.searchParams;
-    for (const [key, value] of searchParams.entries()) {
-      addParamRow(key, value, false);
-    }
-    
-    // 处理hash参数
-    if (url.hash) {
-      const hashContent = url.hash.substring(1);
-      if (hashContent.includes('=')) {
-        const hashParams = new URLSearchParams(hashContent);
-        for (const [key, value] of hashParams.entries()) {
-          addParamRow(key, value, true);
-        }
-      } else if (hashContent) {
-        addParamRow('hash', hashContent, true);
-      }
     }
   }
 
@@ -94,12 +103,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const paramKey = document.createElement('span');
     paramKey.textContent = isHash ? `#${key}` : key;
-    paramKey.style.fontWeight = 'bold';
-    paramKey.style.minWidth = '80px';
+    paramKey.className = 'param-key';
     
     const paramValue = document.createElement('input');
     paramValue.type = 'text';
     paramValue.value = value;
+    paramValue.className = 'param-value';
     paramValue.dataset.key = key;
     paramValue.dataset.isHash = isHash;
     
@@ -115,13 +124,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const regexLabel = document.createElement('label');
     regexLabel.htmlFor = `regex-${key}`;
     regexLabel.textContent = '正则';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = '×';
+    deleteButton.className = 'delete-param';
+    deleteButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      paramGroup.remove();
+      
+      // 检查是否还有参数，如果没有参数则隐藏参数容器
+      if (paramsList.children.length === 0) {
+        paramsContainer.classList.add('hidden');
+      }
+      
+      // 更新 URL 模式
+      try {
+        const url = new URL(currentUrl);
+        const selectedRuleType = document.querySelector('input[name="rule-type"]:checked').value;
+        if (selectedRuleType === 'domain-path-params') {
+          // 重新构建 URL pattern
+          urlPatternInput.value = url.hostname + url.pathname;
+        }
+      } catch (e) {
+        console.error("Error updating URL pattern:", e);
+      }
+    });
     
     paramControls.appendChild(regexCheckbox);
     paramControls.appendChild(regexLabel);
-    
     paramGroup.appendChild(paramKey);
     paramGroup.appendChild(paramValue);
     paramGroup.appendChild(paramControls);
+    paramGroup.appendChild(deleteButton);
     
     paramsList.appendChild(paramGroup);
   }
@@ -348,6 +383,14 @@ document.addEventListener('DOMContentLoaded', function() {
           // 检查参数是否匹配
           let allParamsMatch = true;
           
+          // 如果规则中没有设置任何参数，则认为匹配成功
+          if (!rule.params || rule.params.length === 0) {
+            currentRuleMatch = { rule, index: i };
+            makeRuleFirst(i);
+            return;
+          }
+          
+          // 只检查用户设置的参数
           for (const param of rule.params) {
             let actualValue;
             
@@ -360,6 +403,11 @@ document.addEventListener('DOMContentLoaded', function() {
               }
             } else {
               actualValue = currentUrlObj.searchParams.get(param.key);
+            }
+            
+            // 如果参数值为空，则跳过此参数的匹配
+            if (!param.value.trim()) {
+              continue;
             }
             
             if (param.isRegex) {

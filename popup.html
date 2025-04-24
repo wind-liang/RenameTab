@@ -49,6 +49,14 @@
     button.secondary:hover {
       background-color: #494c50;
     }
+    button.delete-param {
+      padding: 4px 8px;
+      font-size: 12px;
+      background-color: #dc3545;
+    }
+    button.delete-param:hover {
+      background-color: #c82333;
+    }
     .button-group {
       display: flex;
       gap: 8px;
@@ -58,11 +66,50 @@
       align-items: center;
       gap: 8px;
       margin-bottom: 8px;
+      background-color: #f8f9fa;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #e9ecef;
+      position: relative;
     }
     .param-controls {
       display: flex;
       gap: 8px;
       align-items: center;
+    }
+    .param-key {
+      font-weight: bold;
+      min-width: 80px;
+      color: #1a73e8;
+    }
+    .param-value {
+      flex-grow: 1;
+    }
+    .delete-param {
+      position: absolute;
+      right: -8px;
+      top: -8px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background-color: #dc3545;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1;
+      border: none;
+      padding: 0;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .param-group:hover .delete-param {
+      opacity: 1;
+    }
+    .delete-param:hover {
+      background-color: #c82333;
     }
     .rules-list {
       margin-top: 16px;
