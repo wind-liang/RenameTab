@@ -339,7 +339,74 @@ document.addEventListener('DOMContentLoaded', function() {
     savedRules.forEach((rule, index) => {
       const ruleItem = document.createElement('div');
       ruleItem.className = 'rule-item';
-      if (currentRuleMatch && currentRuleMatch.index === index) {
+      
+      // 检查规则是否匹配当前URL
+      let isCurrentMatch = false;
+      try {
+        const currentUrlObj = new URL(currentUrl);
+        
+        if (rule.type === 'domain' && currentUrlObj.hostname === rule.pattern) {
+          isCurrentMatch = true;
+        } else if (rule.type === 'domain-path' && 
+            (currentUrlObj.hostname + currentUrlObj.pathname) === rule.pattern) {
+          isCurrentMatch = true;
+        } else if (rule.type === 'domain-path-params' && 
+            (currentUrlObj.hostname + currentUrlObj.pathname) === rule.pattern) {
+          
+          // 检查参数是否匹配
+          let allParamsMatch = true;
+          
+          // 如果规则中没有设置任何参数，则认为匹配成功
+          if (!rule.params || rule.params.length === 0) {
+            isCurrentMatch = true;
+          } else {
+            // 只检查用户设置的参数
+            for (const param of rule.params) {
+              let actualValue;
+              
+              if (param.isHash) {
+                if (param.key === 'hash') {
+                  actualValue = currentUrlObj.hash.substring(1);
+                } else {
+                  const hashParams = new URLSearchParams(currentUrlObj.hash.substring(1));
+                  actualValue = hashParams.get(param.key);
+                }
+              } else {
+                actualValue = currentUrlObj.searchParams.get(param.key);
+              }
+              
+              // 如果参数值为空，则跳过此参数的匹配
+              if (!param.value.trim()) {
+                continue;
+              }
+              
+              if (param.isRegex) {
+                try {
+                  const regex = new RegExp(param.value);
+                  if (!regex.test(actualValue)) {
+                    allParamsMatch = false;
+                    break;
+                  }
+                } catch (e) {
+                  allParamsMatch = false;
+                  break;
+                }
+              } else if (actualValue !== param.value) {
+                allParamsMatch = false;
+                break;
+              }
+            }
+            
+            if (allParamsMatch) {
+              isCurrentMatch = true;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Error checking rule match:", e);
+      }
+      
+      if (isCurrentMatch) {
         ruleItem.classList.add('current-rule');
       }
       
@@ -365,6 +432,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (confirm('确定要删除这条规则吗？')) {
           savedRules.splice(index, 1);
           chrome.storage.local.set({rules: savedRules}, function() {
+            // 重新检查匹配规则并渲染
+            checkForMatchingRule();
             renderSavedRules();
           });
         }
