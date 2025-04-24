@@ -206,24 +206,47 @@ document.addEventListener('DOMContentLoaded', function() {
     savedRules.push(rule);
     chrome.storage.local.set({rules: savedRules}, function() {
       renderSavedRules();
+      
       // 立即应用规则到当前标签页
       chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         if (tabs[0]) {
-          // 先发送消息给 content script 更新标题
-          chrome.tabs.sendMessage(tabs[0].id, {
+          const currentTab = tabs[0];
+          
+          // 先应用规则
+          chrome.tabs.sendMessage(currentTab.id, {
             action: 'applyRule',
             rule: rule
-          });
-          
-          // 同时更新浏览器标签页的标题
-          chrome.tabs.sendMessage(tabs[0].id, {
-            action: 'getTitle'
           }, function(response) {
-            if (response && response.title) {
-              chrome.tabs.update(tabs[0].id, {
-                title: response.title
+            // 等待规则应用完成后再获取新标题
+            setTimeout(() => {
+              chrome.tabs.sendMessage(currentTab.id, {
+                action: 'getTitle'
+              }, function(response) {
+                if (chrome.runtime.lastError) {
+                  console.error('Error getting title:', chrome.runtime.lastError);
+                  // 如果获取标题失败，直接使用规则中的标题
+                  chrome.tabs.update(currentTab.id, {
+                    title: rule.title
+                  });
+                  return;
+                }
+                
+                if (response && response.title) {
+                  chrome.tabs.update(currentTab.id, {
+                    title: response.title
+                  }, function() {
+                    if (chrome.runtime.lastError) {
+                      console.error('Error updating tab title:', chrome.runtime.lastError);
+                    }
+                  });
+                } else {
+                  // 如果没有收到标题响应，使用规则中的标题
+                  chrome.tabs.update(currentTab.id, {
+                    title: rule.title
+                  });
+                }
               });
-            }
+            }, 100); // 给一个小的延迟确保规则已经被应用
           });
         }
       });
