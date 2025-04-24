@@ -1,21 +1,16 @@
 {
   "manifest_version": 3,
-  "name": "标签重命名",
-  "version": "1.4.3",
-  "description": "根据URL规则重命名浏览器标签",
+  "name": "RenameTab",
+  "version": "1.0",
+  "description": "设置网站标题匹配规则，自动重命名标签页",
   "permissions": ["tabs", "storage"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
     }
-  },
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
   },
   "content_scripts": [
     {
@@ -23,7 +18,9 @@
       "js": ["content.js"]
     }
   ],
-  "background": {
-    "service_worker": "background.js"
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
   }
 } 

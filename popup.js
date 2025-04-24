@@ -1,563 +1,394 @@
-/**
- * Tab Renamer Extension - Popup Logic
- * 
- * This script handles all the functionality for the popup UI, 
- * including rule creation, rule management, and parameter handling.
- */
+document.addEventListener('DOMContentLoaded', function() {
+  // DOM元素
+  const ruleTypeRadios = document.getElementsByName('rule-type');
+  const urlPatternInput = document.getElementById('url-pattern');
+  const titleInput = document.getElementById('title');
+  const saveButton = document.getElementById('save-rule');
+  const updateButton = document.getElementById('update-rule');
+  const cancelEditButton = document.getElementById('cancel-edit');
+  const savedRulesContainer = document.getElementById('saved-rules');
+  const paramsContainer = document.getElementById('params-container');
+  const paramsList = document.getElementById('params-list');
+  
+  let currentUrl = '';
+  let currentTabId = null;
+  let currentTitle = '';
+  let savedRules = [];
+  let currentRuleMatch = null;
+  let editingRuleIndex = null;
 
-// DOM Elements
-const patternInput = document.getElementById('pattern-input');
-const titleInput = document.getElementById('title-input');
-const ruleTypeRadios = document.querySelectorAll('input[name="rule-type"]');
-const paramsSection = document.getElementById('params-section');
-const paramsList = document.getElementById('params-list');
-const saveButton = document.getElementById('save-btn');
-const cancelButton = document.getElementById('cancel-btn');
-const rulesList = document.getElementById('rules-list');
-
-// Global variables
-let currentTab = null;
-let currentUrl = null;
-let urlObject = null;
-let urlParams = new Map();
-let editingRuleIndex = -1; // 标记当前正在编辑的规则索引
-
-/**
- * Initialize the popup
- */
-document.addEventListener('DOMContentLoaded', async () => {
-  // Get the current tab
-  const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
-  currentTab = tabs[0];
-  currentUrl = currentTab.url;
-  
-  // Parse the URL
-  urlObject = new URL(currentUrl);
-  
-  // Set up event listeners
-  setupEventListeners();
-  
-  // Initialize the rule type selection
-  handleRuleTypeChange();
-  
-  // Parse URL parameters if they exist
-  parseUrlParameters();
-  
-  // Load existing rules
-  loadRules();
-});
-
-/**
- * Set up all event listeners
- */
-function setupEventListeners() {
-  // Rule type change
-  ruleTypeRadios.forEach(radio => {
-    radio.addEventListener('change', handleRuleTypeChange);
-  });
-  
-  // Save button
-  saveButton.addEventListener('click', saveRule);
-  
-  // Cancel button
-  cancelButton.addEventListener('click', () => {
-    if (editingRuleIndex !== -1) {
-      // 如果在编辑模式，取消时重置表单
-      resetForm();
-    } else {
-      window.close();
+  // 获取当前标签页信息
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    if (tabs.length > 0) {
+      const tab = tabs[0];
+      currentTabId = tab.id;
+      currentUrl = tab.url;
+      currentTitle = tab.title;
+      
+      // 填充URL模式输入框
+      updateUrlPattern();
+      
+      // 读取保存的规则
+      loadSavedRules();
     }
   });
-}
 
-/**
- * Reset the form and exit edit mode
- */
-function resetForm() {
-  editingRuleIndex = -1;
-  titleInput.value = '';
-  saveButton.textContent = '保存规则';
-  cancelButton.textContent = '取消';
-  
-  // 重置URL和参数
-  handleRuleTypeChange();
-}
-
-/**
- * Handle rule type radio button change
- */
-function handleRuleTypeChange() {
-  // Get selected rule type
-  const selectedRuleType = document.querySelector('input[name="rule-type"]:checked').value;
-  
-  // Update pattern input based on rule type
-  switch (selectedRuleType) {
-    case 'domain':
-      patternInput.value = urlObject.hostname;
-      paramsSection.style.display = 'none';
-      break;
-    case 'path':
-      patternInput.value = urlObject.hostname + urlObject.pathname;
-      paramsSection.style.display = 'none';
-      break;
-    case 'params':
-      patternInput.value = urlObject.hostname + urlObject.pathname;
-      parseUrlParameters();
-      paramsSection.style.display = 'block';
-      break;
-  }
-}
-
-/**
- * Parse URL parameters from the current URL
- */
-function parseUrlParameters() {
-  // Clear existing parameters
-  paramsList.innerHTML = '';
-  urlParams.clear();
-  
-  // Parse search parameters
-  const searchParams = new URLSearchParams(urlObject.search);
-  
-  searchParams.forEach((value, key) => {
-    urlParams.set(key, value);
-    addParameterToUI(key, value);
-  });
-  
-  // Parse hash parameters if they exist
-  if (urlObject.hash && urlObject.hash.length > 1) {
-    // Remove the # symbol
-    const hashString = urlObject.hash.substring(1);
-    
-    // Check if the hash contains key-value pairs
-    if (hashString.includes('=')) {
-      const hashParams = new URLSearchParams(hashString);
-      hashParams.forEach((value, key) => {
-        urlParams.set(`hash_${key}`, value);
-        addParameterToUI(`hash_${key}`, value, true);
-      });
-    }
-  }
-}
-
-/**
- * Add a parameter to the UI
- */
-function addParameterToUI(key, value, isHash = false) {
-  const paramItem = document.createElement('div');
-  paramItem.className = 'param-item';
-  
-  const keyElement = document.createElement('div');
-  keyElement.className = 'param-key';
-  keyElement.textContent = isHash ? `#${key.replace('hash_', '')}` : key;
-  
-  const valueContainer = document.createElement('div');
-  valueContainer.className = 'param-value-container';
-  
-  const valueInput = document.createElement('input');
-  valueInput.className = 'param-value';
-  valueInput.value = isRegexString(value) ? value.slice(1, value.lastIndexOf('/')) : value;
-  valueInput.setAttribute('data-key', key);
-  valueInput.addEventListener('input', (e) => {
-    updateParamValue(key, e.target.value, regexCheckbox.checked);
-  });
-  
-  // 创建值容器并添加输入框
-  valueContainer.appendChild(valueInput);
-  
-  // Create actions container
-  const actionsContainer = document.createElement('div');
-  actionsContainer.className = 'param-actions';
-  
-  // Create checkbox for regex
-  const regexLabel = document.createElement('label');
-  regexLabel.className = 'regex-label';
-  
-  const regexCheckbox = document.createElement('input');
-  regexCheckbox.type = 'checkbox';
-  regexCheckbox.className = 'regex-checkbox';
-  regexCheckbox.checked = isRegexString(value);
-  regexCheckbox.addEventListener('change', (e) => {
-    updateParamValue(key, valueInput.value, e.target.checked);
-  });
-  
-  // Create delete button
-  const deleteButton = document.createElement('button');
-  deleteButton.className = 'param-delete-btn';
-  deleteButton.textContent = '×';
-  deleteButton.title = '删除此参数';
-  deleteButton.addEventListener('click', () => {
-    deleteParameter(key, paramItem);
-  });
-  
-  regexLabel.appendChild(regexCheckbox);
-  regexLabel.appendChild(document.createTextNode('正则'));
-  
-  actionsContainer.appendChild(regexLabel);
-  actionsContainer.appendChild(deleteButton);
-  
-  // 先添加input，再添加操作区域
-  valueContainer.appendChild(actionsContainer);
-  
-  paramItem.appendChild(keyElement);
-  paramItem.appendChild(valueContainer);
-  paramsList.appendChild(paramItem);
-}
-
-/**
- * Update parameter value in the urlParams Map
- */
-function updateParamValue(key, value, isRegex) {
-  if (isRegex) {
-    // Store as regex format: /pattern/
-    // Default to case-insensitive if they don't specify flags
-    const hasFlags = value.includes('/') && value.lastIndexOf('/') > 0;
-    const val = hasFlags ? value : `/${value}/i`;
-    urlParams.set(key, val);
-  } else {
-    urlParams.set(key, value);
-  }
-}
-
-/**
- * Delete a parameter
- */
-function deleteParameter(key, paramElement) {
-  // 从URL参数中移除
-  urlParams.delete(key);
-  
-  // 从UI中移除
-  if (paramElement && paramElement.parentNode) {
-    paramElement.parentNode.removeChild(paramElement);
-  }
-}
-
-/**
- * Save a new rule or update an existing one
- */
-async function saveRule() {
-  // Get the selected rule type
-  const ruleType = document.querySelector('input[name="rule-type"]:checked').value;
-  
-  // Get the custom title
-  const customTitle = titleInput.value.trim();
-  
-  // Validate inputs
-  if (!customTitle) {
-    alert('请输入自定义标题');
-    return;
-  }
-  
-  // Create rule object
-  const rule = {
-    type: ruleType,
-    pattern: patternInput.value,
-    title: customTitle,
-    createdAt: Date.now()
-  };
-  
-  // Add parameters if rule type is 'params'
-  if (ruleType === 'params') {
-    rule.params = {};
-    urlParams.forEach((value, key) => {
-      rule.params[key] = value;
+  // 监听规则类型选择变化
+  for (const radio of ruleTypeRadios) {
+    radio.addEventListener('change', function() {
+      updateUrlPattern();
     });
   }
-  
-  // Get existing rules
-  const { rules = [] } = await chrome.storage.local.get('rules');
-  
-  if (editingRuleIndex !== -1) {
-    // 更新现有规则
-    rules[editingRuleIndex] = rule;
-    
-    // 保存规则后重置编辑状态
-    editingRuleIndex = -1;
-    saveButton.textContent = '保存规则';
-    cancelButton.textContent = '取消';
-  } else {
-    // 添加新规则
-    rules.push(rule);
-  }
-  
-  // Save to storage
-  await chrome.storage.local.set({ rules });
-  
-  // Reload rules list
-  loadRules();
-  
-  // Clear inputs
-  titleInput.value = '';
-  
-  // Apply the rule to the current tab
-  applyRuleToCurrentTab(rule);
-}
 
-/**
- * Load existing rules from storage
- */
-async function loadRules() {
-  // Clear existing rules list
-  rulesList.innerHTML = '';
-  
-  // Get rules from storage
-  const { rules = [] } = await chrome.storage.local.get('rules');
-  
-  // Display rules
-  if (rules.length === 0) {
-    const noRules = document.createElement('div');
-    noRules.textContent = '暂无规则';
-    noRules.style.padding = '10px';
-    noRules.style.color = '#666';
-    rulesList.appendChild(noRules);
-    return;
-  }
-  
-  // 查找匹配当前URL的规则
-  const matchingRulesIndices = [];
-  const nonMatchingRulesIndices = [];
-  
-  // 分类规则为匹配和不匹配
-  rules.forEach((rule, index) => {
-    if (doesUrlMatchRule(currentUrl, rule)) {
-      matchingRulesIndices.push(index);
-    } else {
-      nonMatchingRulesIndices.push(index);
+  // 根据选择的规则类型更新URL模式
+  function updateUrlPattern() {
+    try {
+      const url = new URL(currentUrl);
+      const selectedRuleType = document.querySelector('input[name="rule-type"]:checked').value;
+      
+      if (selectedRuleType === 'domain') {
+        urlPatternInput.value = url.hostname;
+        paramsContainer.classList.add('hidden');
+      } else if (selectedRuleType === 'domain-path') {
+        urlPatternInput.value = url.hostname + url.pathname;
+        paramsContainer.classList.add('hidden');
+      } else if (selectedRuleType === 'domain-path-params') {
+        urlPatternInput.value = url.hostname + url.pathname;
+        parseAndDisplayParams(url);
+        paramsContainer.classList.remove('hidden');
+      }
+    } catch (e) {
+      console.error("Error parsing URL:", e);
+      urlPatternInput.value = currentUrl;
     }
-  });
-  
-  // 先添加匹配的规则
-  matchingRulesIndices.forEach(index => {
-    addRuleToUI(rules[index], index, true); // 传入true表示匹配当前URL
-  });
-  
-  // 再添加不匹配的规则
-  nonMatchingRulesIndices.forEach(index => {
-    addRuleToUI(rules[index], index, false); // 传入false表示不匹配当前URL
-  });
-}
-
-/**
- * Add a rule to the UI
- */
-function addRuleToUI(rule, index, isMatching = false) {
-  const ruleItem = document.createElement('div');
-  ruleItem.className = 'rule-item';
-  
-  // 如果规则匹配当前URL，添加高亮样式
-  if (isMatching) {
-    ruleItem.classList.add('rule-item-matching');
   }
-  
-  const ruleInfo = document.createElement('div');
-  ruleInfo.className = 'rule-info';
-  
-  const rulePattern = document.createElement('div');
-  rulePattern.className = 'rule-pattern';
-  rulePattern.textContent = rule.pattern;
-  
-  const ruleTitle = document.createElement('div');
-  ruleTitle.className = 'rule-title';
-  ruleTitle.textContent = `标题: ${rule.title}`;
-  
-  const ruleActions = document.createElement('div');
-  ruleActions.className = 'rule-actions';
-  
-  const editButton = document.createElement('button');
-  editButton.className = 'edit-btn';
-  editButton.textContent = '✎';
-  editButton.title = '编辑规则';
-  editButton.addEventListener('click', () => editRule(index));
-  
-  const deleteButton = document.createElement('button');
-  deleteButton.className = 'delete-btn';
-  deleteButton.textContent = '×';
-  deleteButton.title = '删除规则';
-  deleteButton.addEventListener('click', () => deleteRule(index));
-  
-  ruleInfo.appendChild(rulePattern);
-  ruleInfo.appendChild(ruleTitle);
-  ruleItem.appendChild(ruleInfo);
-  
-  ruleActions.appendChild(editButton);
-  ruleActions.appendChild(deleteButton);
-  ruleItem.appendChild(ruleActions);
-  
-  rulesList.appendChild(ruleItem);
-}
 
-/**
- * Delete a rule
- */
-async function deleteRule(index) {
-  // Get rules from storage
-  const { rules = [] } = await chrome.storage.local.get('rules');
-  
-  // Remove the rule
-  rules.splice(index, 1);
-  
-  // Save to storage
-  await chrome.storage.local.set({ rules });
-  
-  // Reload rules list
-  loadRules();
-  
-  // Reset the current tab's title if it was using this rule
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    chrome.tabs.sendMessage(tabs[0].id, { action: 'resetTitle' });
-  });
-}
+  // 解析和显示URL参数
+  function parseAndDisplayParams(url) {
+    paramsList.innerHTML = '';
+    
+    // 处理查询参数
+    const searchParams = url.searchParams;
+    for (const [key, value] of searchParams.entries()) {
+      addParamRow(key, value, false);
+    }
+    
+    // 处理hash参数
+    if (url.hash) {
+      const hashContent = url.hash.substring(1);
+      if (hashContent.includes('=')) {
+        const hashParams = new URLSearchParams(hashContent);
+        for (const [key, value] of hashParams.entries()) {
+          addParamRow(key, value, true);
+        }
+      } else if (hashContent) {
+        addParamRow('hash', hashContent, true);
+      }
+    }
+  }
 
-/**
- * Apply a rule to the current tab
- */
-function applyRuleToCurrentTab(rule) {
-  chrome.tabs.sendMessage(currentTab.id, {
-    action: 'applyRule',
-    rule: rule
-  });
-}
+  // 添加参数设置行
+  function addParamRow(key, value, isHash, isRegex = false) {
+    const paramGroup = document.createElement('div');
+    paramGroup.className = 'param-group';
+    
+    const paramKey = document.createElement('span');
+    paramKey.textContent = isHash ? `#${key}` : key;
+    paramKey.style.fontWeight = 'bold';
+    paramKey.style.minWidth = '80px';
+    
+    const paramValue = document.createElement('input');
+    paramValue.type = 'text';
+    paramValue.value = value;
+    paramValue.dataset.key = key;
+    paramValue.dataset.isHash = isHash;
+    
+    const paramControls = document.createElement('div');
+    paramControls.className = 'param-controls';
+    
+    const regexCheckbox = document.createElement('input');
+    regexCheckbox.type = 'checkbox';
+    regexCheckbox.id = `regex-${key}`;
+    regexCheckbox.dataset.key = key;
+    regexCheckbox.checked = isRegex;
+    
+    const regexLabel = document.createElement('label');
+    regexLabel.htmlFor = `regex-${key}`;
+    regexLabel.textContent = '正则';
+    
+    paramControls.appendChild(regexCheckbox);
+    paramControls.appendChild(regexLabel);
+    
+    paramGroup.appendChild(paramKey);
+    paramGroup.appendChild(paramValue);
+    paramGroup.appendChild(paramControls);
+    
+    paramsList.appendChild(paramGroup);
+  }
 
-/**
- * Check if a URL matches a rule
- */
-function doesUrlMatchRule(url, rule) {
-  const urlObj = new URL(url);
-  
-  switch (rule.type) {
-    case 'domain':
-      return urlObj.hostname === rule.pattern;
+  // 收集表单数据
+  function collectFormData() {
+    const title = titleInput.value.trim();
+    if (!title) {
+      alert('请输入自定义标题');
+      return null;
+    }
+    
+    const ruleType = document.querySelector('input[name="rule-type"]:checked').value;
+    const urlPattern = urlPatternInput.value;
+    
+    let rule = {
+      type: ruleType,
+      pattern: urlPattern,
+      title: title
+    };
+    
+    if (ruleType === 'domain-path-params') {
+      rule.params = [];
+      const paramGroups = paramsList.querySelectorAll('.param-group');
       
-    case 'path':
-      return urlObj.hostname + urlObj.pathname === rule.pattern;
-      
-    case 'params':
-      // First check hostname and pathname
-      if (urlObj.hostname + urlObj.pathname !== rule.pattern) {
-        return false;
+      paramGroups.forEach(group => {
+        const valueInput = group.querySelector('input[type="text"]');
+        const regexCheckbox = group.querySelector('input[type="checkbox"]');
+        
+        rule.params.push({
+          key: valueInput.dataset.key,
+          value: valueInput.value,
+          isRegex: regexCheckbox.checked,
+          isHash: valueInput.dataset.isHash === 'true'
+        });
+      });
+    }
+
+    return rule;
+  }
+
+  // 保存规则
+  saveButton.addEventListener('click', function() {
+    const rule = collectFormData();
+    if (!rule) return;
+    
+    savedRules.push(rule);
+    chrome.storage.local.set({rules: savedRules}, function() {
+      renderSavedRules();
+      // 立即应用规则
+      applyRuleToCurrentTab(rule);
+      // 清空表单
+      titleInput.value = '';
+    });
+  });
+
+  // 更新规则
+  updateButton.addEventListener('click', function() {
+    if (editingRuleIndex === null) return;
+    
+    const rule = collectFormData();
+    if (!rule) return;
+    
+    savedRules[editingRuleIndex] = rule;
+    chrome.storage.local.set({rules: savedRules}, function() {
+      exitEditMode();
+      renderSavedRules();
+      // 立即应用规则
+      applyRuleToCurrentTab(rule);
+    });
+  });
+
+  // 取消编辑
+  cancelEditButton.addEventListener('click', exitEditMode);
+
+  // 进入编辑模式
+  function enterEditMode(rule, index) {
+    editingRuleIndex = index;
+    
+    // 设置表单值
+    document.querySelector(`input[name="rule-type"][value="${rule.type}"]`).checked = true;
+    urlPatternInput.value = rule.pattern;
+    titleInput.value = rule.title;
+    
+    // 如果有参数，设置参数值
+    if (rule.type === 'domain-path-params' && rule.params) {
+      paramsList.innerHTML = '';
+      rule.params.forEach(param => {
+        addParamRow(param.key, param.value, param.isHash, param.isRegex);
+      });
+      paramsContainer.classList.remove('hidden');
+    } else {
+      paramsContainer.classList.add('hidden');
+    }
+    
+    // 切换按钮显示
+    saveButton.classList.add('edit-mode');
+    document.querySelector('.edit-buttons').classList.add('edit-mode');
+  }
+
+  // 退出编辑模式
+  function exitEditMode() {
+    editingRuleIndex = null;
+    
+    // 重置表单
+    document.querySelector('input[name="rule-type"][value="domain"]').checked = true;
+    titleInput.value = '';
+    updateUrlPattern();
+    
+    // 切换按钮显示
+    saveButton.classList.remove('edit-mode');
+    document.querySelector('.edit-buttons').classList.remove('edit-mode');
+  }
+
+  // 加载保存的规则
+  function loadSavedRules() {
+    chrome.storage.local.get('rules', function(data) {
+      if (data.rules && Array.isArray(data.rules)) {
+        savedRules = data.rules;
+        checkForMatchingRule();
+        renderSavedRules();
+      }
+    });
+  }
+
+  // 渲染保存的规则
+  function renderSavedRules() {
+    savedRulesContainer.innerHTML = '';
+    
+    if (savedRules.length === 0) {
+      const noRules = document.createElement('div');
+      noRules.textContent = '暂无保存的规则';
+      savedRulesContainer.appendChild(noRules);
+      return;
+    }
+    
+    savedRules.forEach((rule, index) => {
+      const ruleItem = document.createElement('div');
+      ruleItem.className = 'rule-item';
+      if (currentRuleMatch && currentRuleMatch.index === index) {
+        ruleItem.classList.add('current-rule');
       }
       
-      // Then check parameters
-      const searchParams = new URLSearchParams(urlObj.search);
-      const hashParams = urlObj.hash && urlObj.hash.length > 1 && urlObj.hash.includes('=') 
-        ? new URLSearchParams(urlObj.hash.substring(1)) 
-        : new Map();
+      const ruleInfo = document.createElement('div');
+      ruleInfo.className = 'rule-info';
+      ruleInfo.innerHTML = `<strong>${rule.title}</strong><br><small>${rule.pattern}</small>`;
       
-      // Check if all rule parameters match URL parameters
-      for (const [key, value] of Object.entries(rule.params)) {
-        if (key.startsWith('hash_')) {
-          const actualKey = key.replace('hash_', '');
-          if (!hashParams.has(actualKey)) return false;
+      const ruleActions = document.createElement('div');
+      ruleActions.className = 'rule-actions';
+      
+      const editButton = document.createElement('button');
+      editButton.textContent = '编辑';
+      editButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        enterEditMode(rule, index);
+      });
+      
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = '删除';
+      deleteButton.className = 'secondary';
+      deleteButton.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (confirm('确定要删除这条规则吗？')) {
+          savedRules.splice(index, 1);
+          chrome.storage.local.set({rules: savedRules}, function() {
+            renderSavedRules();
+          });
+        }
+      });
+      
+      ruleActions.appendChild(editButton);
+      ruleActions.appendChild(deleteButton);
+      
+      ruleItem.appendChild(ruleInfo);
+      ruleItem.appendChild(ruleActions);
+      savedRulesContainer.appendChild(ruleItem);
+    });
+  }
+
+  // 检查当前URL是否匹配已保存的规则
+  function checkForMatchingRule() {
+    try {
+      const currentUrlObj = new URL(currentUrl);
+      
+      for (let i = 0; i < savedRules.length; i++) {
+        const rule = savedRules[i];
+        
+        if (rule.type === 'domain' && currentUrlObj.hostname === rule.pattern) {
+          currentRuleMatch = { rule, index: i };
+          makeRuleFirst(i);
+          return;
+        }
+        
+        if (rule.type === 'domain-path' && 
+            (currentUrlObj.hostname + currentUrlObj.pathname) === rule.pattern) {
+          currentRuleMatch = { rule, index: i };
+          makeRuleFirst(i);
+          return;
+        }
+        
+        if (rule.type === 'domain-path-params' && 
+            (currentUrlObj.hostname + currentUrlObj.pathname) === rule.pattern) {
           
-          // If value is regex, check if the URL param matches
-          if (isRegexString(value)) {
-            const regex = stringToRegex(value);
-            if (!regex.test(hashParams.get(actualKey))) return false;
-          } else if (hashParams.get(actualKey) !== value) {
-            return false;
+          // 检查参数是否匹配
+          let allParamsMatch = true;
+          
+          for (const param of rule.params) {
+            let actualValue;
+            
+            if (param.isHash) {
+              if (param.key === 'hash') {
+                actualValue = currentUrlObj.hash.substring(1);
+              } else {
+                const hashParams = new URLSearchParams(currentUrlObj.hash.substring(1));
+                actualValue = hashParams.get(param.key);
+              }
+            } else {
+              actualValue = currentUrlObj.searchParams.get(param.key);
+            }
+            
+            if (param.isRegex) {
+              try {
+                const regex = new RegExp(param.value);
+                if (!regex.test(actualValue)) {
+                  allParamsMatch = false;
+                  break;
+                }
+              } catch (e) {
+                allParamsMatch = false;
+                break;
+              }
+            } else if (actualValue !== param.value) {
+              allParamsMatch = false;
+              break;
+            }
           }
-        } else {
-          if (!searchParams.has(key)) return false;
           
-          // If value is regex, check if the URL param matches
-          if (isRegexString(value)) {
-            const regex = stringToRegex(value);
-            if (!regex.test(searchParams.get(key))) return false;
-          } else if (searchParams.get(key) !== value) {
-            return false;
+          if (allParamsMatch) {
+            currentRuleMatch = { rule, index: i };
+            makeRuleFirst(i);
+            return;
           }
         }
       }
-      
-      return true;
-      
-    default:
-      return false;
-  }
-}
-
-/**
- * Check if a string is a regex pattern
- */
-function isRegexString(str) {
-  if (typeof str !== 'string') return false;
-  return str.startsWith('/') && str.lastIndexOf('/') > 0;
-}
-
-/**
- * Convert a string to a RegExp object
- */
-function stringToRegex(str) {
-  if (typeof str !== 'string') return new RegExp('.*');
-  
-  try {
-    const lastSlashIndex = str.lastIndexOf('/');
-    if (lastSlashIndex <= 0) return new RegExp(str);
-    
-    const pattern = str.slice(1, lastSlashIndex);
-    const flags = str.slice(lastSlashIndex + 1);
-    return new RegExp(pattern, flags);
-  } catch (e) {
-    console.error('Error creating regex from string:', e);
-    return new RegExp('.*');
-  }
-}
-
-/**
- * Edit a rule
- */
-async function editRule(index) {
-  // 获取规则
-  const { rules = [] } = await chrome.storage.local.get('rules');
-  const rule = rules[index];
-  
-  if (!rule) return;
-  
-  // 设置编辑模式
-  editingRuleIndex = index;
-  
-  // 根据规则类型选择相应的单选按钮
-  document.querySelector(`input[name="rule-type"][value="${rule.type}"]`).checked = true;
-  
-  // 设置URL模式和标题
-  patternInput.value = rule.pattern;
-  titleInput.value = rule.title;
-  
-  // 如果是参数规则，加载参数
-  if (rule.type === 'params') {
-    // 清空当前参数列表
-    paramsList.innerHTML = '';
-    urlParams.clear();
-    
-    // 添加规则中的参数
-    if (rule.params) {
-      // 将参数转换为数组并进行排序，使界面显示更加一致
-      const paramsArray = Object.entries(rule.params);
-      
-      // 先添加非哈希参数
-      paramsArray
-        .filter(([key]) => !key.startsWith('hash_'))
-        .forEach(([key, value]) => {
-          urlParams.set(key, value);
-          addParameterToUI(key, value, false);
-        });
-      
-      // 再添加哈希参数
-      paramsArray
-        .filter(([key]) => key.startsWith('hash_'))
-        .forEach(([key, value]) => {
-          urlParams.set(key, value);
-          addParameterToUI(key, value, true);
-        });
+    } catch (e) {
+      console.error("Error matching URL with rules:", e);
     }
-    
-    // 显示参数部分
-    paramsSection.style.display = 'block';
-  } else {
-    paramsSection.style.display = 'none';
   }
-  
-  // 更改按钮文本
-  saveButton.textContent = '更新规则';
-  cancelButton.textContent = '取消编辑';
-} 
+
+  // 将匹配的规则置顶
+  function makeRuleFirst(index) {
+    if (index === 0) return;
+    
+    const rule = savedRules.splice(index, 1)[0];
+    savedRules.unshift(rule);
+    
+    chrome.storage.local.set({rules: savedRules});
+    currentRuleMatch.index = 0;
+  }
+
+  // 应用规则到当前标签页
+  function applyRuleToCurrentTab(rule) {
+    if (currentTabId) {
+      chrome.tabs.sendMessage(currentTabId, {
+        action: 'applyRule',
+        rule: rule
+      });
+    }
+  }
+}); 

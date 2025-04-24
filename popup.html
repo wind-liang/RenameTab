@@ -2,69 +2,147 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>标签重命名</title>
-  <link rel="stylesheet" href="popup.css">
+  <title>标签页重命名</title>
+  <style>
+    body {
+      width: 360px;
+      padding: 15px;
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .rule-type {
+      display: flex;
+      gap: 10px;
+    }
+    .rule-type label {
+      cursor: pointer;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    input[type="text"] {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #3367d6;
+    }
+    button.secondary {
+      background-color: #5f6368;
+    }
+    button.secondary:hover {
+      background-color: #494c50;
+    }
+    .button-group {
+      display: flex;
+      gap: 8px;
+    }
+    .param-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .param-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .rules-list {
+      margin-top: 16px;
+      border-top: 1px solid #eee;
+      padding-top: 16px;
+    }
+    .rule-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+    .rule-item .rule-info {
+      flex-grow: 1;
+      margin-right: 8px;
+    }
+    .rule-item .rule-actions {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .rule-item .rule-actions button {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+    .current-rule {
+      background-color: #e8f0fe;
+      border-left: 3px solid #4285f4;
+    }
+    .hidden {
+      display: none;
+    }
+    #save-rule.edit-mode {
+      display: none;
+    }
+    .edit-buttons {
+      display: none;
+    }
+    .edit-buttons.edit-mode {
+      display: flex;
+      gap: 8px;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>标签重命名</h1>
+    <h2>标签页重命名</h2>
     
-    <!-- Rule type selection -->
-    <div class="selection-container">
-      <h2>选择规则类型</h2>
-      <div class="options">
-        <label>
-          <input type="radio" name="rule-type" value="domain" checked>
-          <span>按域名</span>
-        </label>
-        <label>
-          <input type="radio" name="rule-type" value="path">
-          <span>按域名+路径</span>
-        </label>
-        <label>
-          <input type="radio" name="rule-type" value="params">
-          <span>按域名+路径+参数</span>
-        </label>
-      </div>
+    <div class="rule-type">
+      <label><input type="radio" name="rule-type" value="domain" checked> 按域名</label>
+      <label><input type="radio" name="rule-type" value="domain-path"> 按域名+路径</label>
+      <label><input type="radio" name="rule-type" value="domain-path-params"> 按域名+路径+参数</label>
     </div>
     
-    <!-- URL pattern display and customization -->
-    <div class="pattern-container">
-      <h2>URL 模式</h2>
-      <input type="text" id="pattern-input" class="full-width" readonly>
+    <div class="form-group">
+      <label for="url-pattern">网址模式</label>
+      <input type="text" id="url-pattern" readonly>
     </div>
     
-    <!-- Title input -->
-    <div class="title-container">
-      <h2>自定义标题</h2>
-      <input type="text" id="title-input" class="full-width" placeholder="请输入自定义标题">
+    <div id="params-container" class="form-group hidden">
+      <label>参数设置</label>
+      <div id="params-list"></div>
     </div>
     
-    <!-- Parameters section (visible only for param mode) -->
-    <div id="params-section" class="params-container" style="display: none;">
-      <h2>URL 参数</h2>
-      <div class="params-header">
-        <div class="param-key-header">参数名</div>
-        <div class="param-value-header">参数值</div>
-        <div class="param-action-header">操作</div>
-      </div>
-      <div id="params-list">
-        <!-- Parameters will be dynamically added here -->
-      </div>
+    <div class="form-group">
+      <label for="title">自定义标题</label>
+      <input type="text" id="title" placeholder="输入您想要的标题">
     </div>
     
-    <!-- Buttons -->
-    <div class="actions-container">
-      <button id="save-btn" class="btn primary">保存规则</button>
-      <button id="cancel-btn" class="btn secondary">取消</button>
+    <button id="save-rule">保存规则</button>
+    <div class="edit-buttons">
+      <button id="update-rule">更新规则</button>
+      <button id="cancel-edit" class="secondary">取消编辑</button>
     </div>
     
-    <!-- Existing rules section -->
-    <div class="rules-container">
-      <h2>已有规则</h2>
-      <div id="rules-list">
-        <!-- Rules will be dynamically added here -->
-      </div>
+    <div class="rules-list">
+      <h3>已保存规则</h3>
+      <div id="saved-rules"></div>
     </div>
   </div>
   
