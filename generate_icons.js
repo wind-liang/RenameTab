@@ -15,20 +15,53 @@ const sizes = [16, 48, 128];
 async function generateIcons() {
   try {
     for (const size of sizes) {
-      // 创建新图像
-      const image = new Jimp(size, size, '#4285f4');
+      // 创建新图像，使用透明背景
+      const image = new Jimp(size, size, 0x00000000);
       
-      // 添加渐变效果（通过简单的半透明叠加模拟）
+      // 定义颜色
+      const primaryColor = 0x2196F3FF; // Material Blue
+      
+      // 计算圆形背景的参数
+      const centerX = size / 2;
+      const centerY = size / 2;
+      const radius = size / 2;
+      
+      // 绘制圆形背景
       for (let x = 0; x < size; x++) {
         for (let y = 0; y < size; y++) {
-          const position = x / size;
-          const color = Jimp.rgbaToInt(
-            66 + Math.floor(position * (52 - 66)), // R: from 4285f4 to 34a853
-            133 + Math.floor(position * (168 - 133)), // G
-            244 + Math.floor(position * (83 - 244)), // B
-            255 // A
+          const distanceFromCenter = Math.sqrt(
+            Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)
           );
-          image.setPixelColor(color, x, y);
+          
+          if (distanceFromCenter <= radius) {
+            image.setPixelColor(primaryColor, x, y);
+          }
+        }
+      }
+
+      // 绘制字母"T"（稍微调大一些）
+      const tWidth = Math.floor(size * 0.6);  // 增加宽度
+      const tHeight = Math.floor(size * 0.6);  // 增加高度
+      const tThickness = Math.max(2, Math.floor(size * 0.15));  // 增加粗细
+      const tX = Math.floor((size - tWidth) / 2);
+      const tY = Math.floor((size - tHeight) / 2) - Math.floor(size * 0.05);  // 稍微上移
+
+      // 绘制T的横线
+      for (let x = tX; x < tX + tWidth; x++) {
+        for (let y = tY; y < tY + tThickness; y++) {
+          if (isInsideCircle(x, y, centerX, centerY, radius)) {
+            image.setPixelColor(0xFFFFFFFF, x, y);
+          }
+        }
+      }
+
+      // 绘制T的竖线
+      const tVerticalX = tX + Math.floor(tWidth / 2) - Math.floor(tThickness / 2);
+      for (let x = tVerticalX; x < tVerticalX + tThickness; x++) {
+        for (let y = tY; y < tY + tHeight; y++) {
+          if (isInsideCircle(x, y, centerX, centerY, radius)) {
+            image.setPixelColor(0xFFFFFFFF, x, y);
+          }
         }
       }
 
@@ -39,6 +72,11 @@ async function generateIcons() {
   } catch (error) {
     console.error('生成图标时出错：', error);
   }
+}
+
+// 辅助函数：检查点是否在圆内
+function isInsideCircle(x, y, centerX, centerY, radius) {
+  return Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)) <= radius;
 }
 
 generateIcons(); 
