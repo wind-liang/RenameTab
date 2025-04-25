@@ -119,6 +119,7 @@
     .rule-item {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       padding: 8px;
       border: 1px solid #eee;
       border-radius: 4px;
@@ -127,15 +128,19 @@
     .rule-item .rule-info {
       flex-grow: 1;
       margin-right: 8px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .rule-item .rule-actions {
+      flex-shrink: 0;
       display: flex;
-      gap: 4px;
-      align-items: center;
+      gap: 8px;
     }
     .rule-item .rule-actions button {
       padding: 4px 8px;
       font-size: 12px;
+      min-width: 48px;
+      text-align: center;
     }
     .current-rule {
       background-color: #e8f0fe;
