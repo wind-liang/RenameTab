@@ -2,6 +2,8 @@
 
 RenameTab是一个Chrome浏览器扩展，可以根据自定义规则自动重命名网页标签页。
 
+由 Cursor 开发完成，记录参考 [Cursor 写一个网页标题重命名的浏览器插件](https://mp.weixin.qq.com/s/_irX3wVl8z3fFz-EYAArCQ)。
+
 ![示例](sample.jpg)
 
 ## 主要功能
